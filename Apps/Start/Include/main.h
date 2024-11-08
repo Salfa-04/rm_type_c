@@ -7,7 +7,7 @@ extern "C" {
 
 #include "stm32f4xx_hal.h"
 
-void hal_clock_init(void);
+void system_init(void);
 void Error_Handler(void);
 
 #ifdef __cplusplus

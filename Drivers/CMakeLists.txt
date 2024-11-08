@@ -58,8 +58,9 @@ add_library(usbdevice INTERFACE)
 file(GLOB_RECURSE USBDEVICE_SRC USBDevice/*.c)
 
 target_include_directories(usbdevice INTERFACE
-    USBDevice/Class/CDC/Inc
     USBDevice/Core/Inc
+    USBDevice/App/Include
+    USBDevice/CDC/Inc
 )
 
 target_sources(usbdevice INTERFACE ${USBDEVICE_SRC})

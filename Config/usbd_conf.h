@@ -1,5 +1,5 @@
-#ifndef __USBD_CONF__H
-#define __USBD_CONF__H
+#ifndef __USBD_CONF_H
+#define __USBD_CONF_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -78,4 +78,4 @@ void USBD_static_free(void *p);
 }
 #endif
 
-#endif /* __USBD_CONF__H */
+#endif /* __USBD_CONF_H */

@@ -1,9 +1,12 @@
 #include "blinky.h"
 
 #include "cmsis_os.h"
+#include "usb.h"
 
 void blinky(void const *args) {
   (void)args;
+
+  usb_device_init();
 
   /* Infinite loop */
   for (;;) {

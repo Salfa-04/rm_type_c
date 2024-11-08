@@ -1,5 +1,20 @@
 #include "stm32f4xx_hal.h"
 
+#define Serial huart1
+#define __va(x) __builtin_va_##x
+
+extern UART_HandleTypeDef Serial;
+void SystemClock_Config(void);
+
+/************************** Init Handler **************************/
+
+void system_init(void) {
+  HAL_Init();
+  SystemClock_Config();
+}
+
+/************************** Error Handler **************************/
+
 void Error_Handler(void) {
   __disable_irq();
   for (;;);
@@ -7,23 +22,12 @@ void Error_Handler(void) {
 
 #ifdef USE_FULL_ASSERT
 void assert_failed(uint8_t *file, uint32_t line) {
+  /* Wrong parameters value: file on line */
   (void)file, (void)line;
-  /* User can add his own implementation to report the file name and line
-     number, tex: printf("Wrong parameters value: file %s on line %d\r\n", file,
-     line) */
 }
 #endif /* USE_FULL_ASSERT */
 
-#define Serial huart1
-#define __va(x) __builtin_va_##x
-
-extern UART_HandleTypeDef Serial;
-void SystemClock_Config(void);
-
-void hal_clock_init(void) {
-  HAL_Init();
-  SystemClock_Config();
-}
+/************************** Print Redirection **************************/
 
 void uprint(const uint8_t *data, uint8_t len) {
   if (Serial.hdmatx->Lock) return;
@@ -42,6 +46,8 @@ void uprintf(const char *format, ...) {
 
   uprint(buffer, len);
 }
+
+/************************** System Clock Config  **************************/
 
 void SystemClock_Config(void) {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};

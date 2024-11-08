@@ -5,7 +5,7 @@
 #include "usart.h"
 
 int main(void) {
-  hal_clock_init();
+  system_init();
   led_gpio_init();
   uart1_init();
 
