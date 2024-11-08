@@ -13,7 +13,8 @@ set(CMAKE_PROJECT_VERSION           "0.07.23")
 set(CMAKE_PROJECT_URL               "api.salfa.cc")
 
 set(PRINTF_FLOAT_SUPPORT            ON)    # BOOL Y/N ON/OFF
-set(CMAKE_BUILD_TYPE                Debug)  # Release or Debug
+# set(CMAKE_BUILD_TYPE                Debug)  # Release or Debug
+set(CMAKE_BUILD_TYPE                Release)  # Release or Debug
 
 set(CMAKE_C_STANDARD                11)     # Min: 11..
 set(CMAKE_CXX_STANDARD              11)     # Min: 11..
@@ -164,19 +165,20 @@ add_subdirectory(Drivers)
 
 # Build CoreLibrary from User
 add_library(corelibraries INTERFACE)
-
 file(GLOB LIBS_SYSTEM Libraries/System/*.c)
+file(GLOB LIBS_USBDEVICE Libraries/Device/*.c)
 file(GLOB LIBS_PERIPHERALS Libraries/Peripherals/*.c)
 
 target_compile_definitions(corelibraries INTERFACE
 )
 
 target_include_directories(corelibraries INTERFACE
+    Libraries/Device/Include
     Libraries/Peripherals/Include
 )
 
 target_sources(corelibraries INTERFACE
-    ${LIBS_SYSTEM} ${LIBS_PERIPHERALS}
+    ${LIBS_SYSTEM} ${LIBS_PERIPHERALS} ${LIBS_USBDEVICE}
 )
 
 

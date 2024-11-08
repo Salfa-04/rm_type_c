@@ -59,7 +59,6 @@ file(GLOB_RECURSE USBDEVICE_SRC USBDevice/*.c)
 
 target_include_directories(usbdevice INTERFACE
     USBDevice/Core/Inc
-    USBDevice/App/Include
     USBDevice/CDC/Inc
 )
 
