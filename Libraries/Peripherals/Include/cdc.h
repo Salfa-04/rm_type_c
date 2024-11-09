@@ -10,7 +10,7 @@ extern "C" {
 #include "usbd_cdc_if.h"
 #include "usbd_def.h"
 
-void usb_device_init(void);
+void usb_cdc_init(void);
 
 #ifdef __cplusplus
 }

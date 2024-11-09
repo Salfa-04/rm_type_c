@@ -6,9 +6,22 @@ set(CMAKE_PROJECT_NAME              components)
 project(${CMAKE_PROJECT_NAME})
 add_library(${CMAKE_PROJECT_NAME} INTERFACE)
 target_link_libraries(${CMAKE_PROJECT_NAME} INTERFACE
-    example
+    bled
 )
 
+
+
+##########################################
+### Board LED Driver
+##########################################
+
+add_library(bled INTERFACE)
+file(GLOB COMPONENTS_BLED BLED/*.c)
+target_include_directories(bled INTERFACE BLED)
+
+target_sources(bled INTERFACE
+    ${COMPONENTS_BLED}
+)
 
 
 ##########################################

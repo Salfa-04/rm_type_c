@@ -1,4 +1,4 @@
-#include "usb.h"
+#include "cdc.h"
 
 #include "usbd_cdc.h"
 #include "usbd_cdc_if.h"
@@ -7,7 +7,7 @@
 
 USBD_HandleTypeDef hUsbDeviceFS;
 
-void usb_device_init(void) {
+void usb_cdc_init(void) {
   /* Init Device Library, add supported class and start the library. */
 
   if (USBD_Init(&hUsbDeviceFS, &FS_Desc, DEVICE_FS) != USBD_OK) {

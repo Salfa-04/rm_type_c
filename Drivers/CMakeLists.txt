@@ -6,7 +6,7 @@ set(CMAKE_PROJECT_NAME              drivers)
 project(${CMAKE_PROJECT_NAME})
 add_library(${CMAKE_PROJECT_NAME} INTERFACE)
 target_link_libraries(${CMAKE_PROJECT_NAME} INTERFACE
-    stm32cubemx freertos usbdevice
+    stm32cubemx freertos usbd
 )
 
 
@@ -16,7 +16,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME} INTERFACE
 ##########################################
 
 add_library(stm32cubemx INTERFACE)
-
 file(GLOB HAL_SOURCE F4HAL/Src/*.c)
 
 target_compile_definitions(stm32cubemx INTERFACE
@@ -37,7 +36,6 @@ target_sources(stm32cubemx INTERFACE ${HAL_SOURCE})
 ##########################################
 
 add_library(freertos INTERFACE)
-
 file(GLOB_RECURSE FREERTOS_SRC FreeRTOS/*.c)
 
 target_include_directories(freertos INTERFACE
@@ -53,13 +51,11 @@ target_sources(freertos INTERFACE ${FREERTOS_SRC})
 ### USB Device Driver
 ##########################################
 
-add_library(usbdevice INTERFACE)
+add_library(usbd INTERFACE)
+file(GLOB_RECURSE USBD_SRC USBD/*.c)
 
-file(GLOB_RECURSE USBDEVICE_SRC USBDevice/*.c)
-
-target_include_directories(usbdevice INTERFACE
-    USBDevice/Core/Inc
-    USBDevice/CDC/Inc
+target_include_directories(usbd INTERFACE
+    USBD/Core/Inc USBD/CDC/Inc
 )
 
-target_sources(usbdevice INTERFACE ${USBDEVICE_SRC})
+target_sources(usbd INTERFACE ${USBD_SRC})

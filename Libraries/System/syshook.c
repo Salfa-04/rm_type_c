@@ -1,9 +1,6 @@
+#include "cdc.h"
 #include "stm32f4xx_hal.h"
 
-#define Serial huart1
-#define __va(x) __builtin_va_##x
-
-extern UART_HandleTypeDef Serial;
 void SystemClock_Config(void);
 
 /************************** Init Handler **************************/
@@ -29,17 +26,26 @@ void assert_failed(uint8_t *file, uint32_t line) {
 
 /************************** Print Redirection **************************/
 
-void uprint(const uint8_t *data, uint8_t len) {
-  if (Serial.hdmatx->Lock) return;
-  HAL_UART_Transmit_DMA(&Serial, data, len);
+#define __va(x) __builtin_va_##x
+
+// #define Serial huart1
+// extern UART_HandleTypeDef huart1;
+extern USBD_HandleTypeDef hUsbDeviceFS;
+
+void uprint(uint8_t *data, uint8_t len) {
+  // if (Serial.hdmatx->Lock) return;
+  // HAL_UART_Transmit_DMA(&Serial, data, len);
+
+  CDC_Transmit_FS(data, len);
 }
 
 void uprintf(const char *format, ...) {
-  if (Serial.hdmatx->Lock) return;
+  // if (Serial.hdmatx->Lock) return;
+  if (((USBD_CDC_HandleTypeDef *)hUsbDeviceFS.pClassData)->TxState != 0) return;
 
   __va(list) arg;
   __va(start)(arg, format);
-  static uint8_t buffer[0xFF] = {0};
+  static uint8_t buffer[0x40] = {0};
   int vsnprintf(char *, unsigned int, const char *, __va(list));
   uint8_t len = vsnprintf((char *)buffer, sizeof(buffer), format, arg);
   __va(end)(arg);

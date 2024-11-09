@@ -7,9 +7,11 @@ extern "C" {
 
 #include "cmsis_os.h"
 
-extern osThreadId blinkyTask;
-
 void freertos_init(void);
+
+extern osThreadId blinkyTask;
+extern osThreadId loopTask;
+extern osThreadId deviceTask;
 
 #ifdef __cplusplus
 }

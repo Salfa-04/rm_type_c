@@ -1,5 +1,5 @@
-#ifndef __BLINKY_H
-#define __BLINKY_H
+#ifndef __DEVICE_H
+#define __DEVICE_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -7,10 +7,10 @@ extern "C" {
 
 #include "stm32f4xx_hal.h"
 
-void blinky(void const *args);
+void device(void const *);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __BLINKY_H */
+#endif /* __DEVICE_H */
