@@ -45,7 +45,7 @@ void uprintf(const char *format, ...) {
 
   __va(list) arg;
   __va(start)(arg, format);
-  static uint8_t buffer[0x40] = {0};
+  static uint8_t buffer[0xFF] = {0};
   int vsnprintf(char *, unsigned int, const char *, __va(list));
   uint8_t len = vsnprintf((char *)buffer, sizeof(buffer), format, arg);
   __va(end)(arg);

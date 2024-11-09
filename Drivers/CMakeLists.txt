@@ -6,7 +6,7 @@ set(CMAKE_PROJECT_NAME              drivers)
 project(${CMAKE_PROJECT_NAME})
 add_library(${CMAKE_PROJECT_NAME} INTERFACE)
 target_link_libraries(${CMAKE_PROJECT_NAME} INTERFACE
-    stm32cubemx freertos usbd
+    stm32cubemx arm_math freertos usbd
 )
 
 
@@ -29,6 +29,25 @@ target_include_directories(stm32cubemx INTERFACE
 )
 
 target_sources(stm32cubemx INTERFACE ${HAL_SOURCE})
+
+
+##########################################
+### Link DSP Library (Arm-Math)
+##########################################
+add_library(arm_math INTERFACE)
+file(GLOB_RECURSE COMPONENTS_MATH DSP/Source/*.c)
+
+target_include_directories(arm_math INTERFACE
+    DSP/Include DSP/Include/dsp DSP/PrivateInclude
+)
+
+target_sources(arm_math INTERFACE
+    ${COMPONENTS_MATH}
+)
+
+target_compile_definitions(arm_math INTERFACE
+    ARM_MATH_MATRIX_CHECK ARM_MATH_ROUNDING ARM_MATH_LOOPUNROLL
+)
 
 
 ##########################################

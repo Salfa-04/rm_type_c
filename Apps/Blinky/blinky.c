@@ -52,7 +52,8 @@ void blinky(void const *args) {
         aRGB = ((uint32_t)(alpha)) << 24 | ((uint32_t)(red)) << 16 |
                ((uint32_t)(green)) << 8 | ((uint32_t)(blue)) << 0;
         bled_show(aRGB);
-        osDelay(1);
+
+        vTaskDelay(1);
       }
     }
   }

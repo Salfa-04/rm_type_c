@@ -1,12 +1,13 @@
 #include "bled.h"
 
-TIM_HandleTypeDef htim5;
-void bled_gpio_init(void);
-
-static uint8_t alpha;
-static uint16_t red, green, blue;
+static TIM_HandleTypeDef htim5;
+static void bled_gpio_init(void);
+static void bled_tim_init(void);
 
 void bled_show(uint32_t aRGB) {
+  static uint8_t alpha;
+  static uint16_t red, green, blue;
+
   alpha = (aRGB & 0xFF000000) >> 24;
   red = ((aRGB & 0x00FF0000) >> 16) * alpha;
   green = ((aRGB & 0x0000FF00) >> 8) * alpha;
@@ -18,6 +19,11 @@ void bled_show(uint32_t aRGB) {
 }
 
 void bled_init(void) {
+  bled_tim_init();
+  bled_gpio_init();
+}
+
+void bled_tim_init(void) {
   /* TIM5 clock enable */
   __HAL_RCC_TIM5_CLK_ENABLE();
 
@@ -54,8 +60,6 @@ void bled_init(void) {
   if (HAL_TIM_PWM_ConfigChannel(&htim5, &sConfigOC, TIM_CHANNEL_3) != HAL_OK) {
     Error_Handler();
   }
-
-  bled_gpio_init();
 }
 
 void bled_gpio_init(void) {
@@ -78,11 +82,11 @@ void bled_gpio_init(void) {
 
   if (HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_1) != HAL_OK) {
     Error_Handler();
-  };
+  }
   if (HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_2) != HAL_OK) {
     Error_Handler();
-  };
+  }
   if (HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_3) != HAL_OK) {
     Error_Handler();
-  };
+  }
 }
