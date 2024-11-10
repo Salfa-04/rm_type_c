@@ -1,5 +1,6 @@
 #include "cdc.h"
 #include "stm32f4xx_hal.h"
+#include "type_def.h"
 
 void SystemClock_Config(void);
 
@@ -27,21 +28,15 @@ void assert_failed(uint8_t *file, uint32_t line) {
 /************************** Print Redirection **************************/
 
 #define __va(x) __builtin_va_##x
-
-// #define Serial huart1
-// extern UART_HandleTypeDef huart1;
 extern USBD_HandleTypeDef hUsbDeviceFS;
 
-void uprint(uint8_t *data, uint8_t len) {
-  // if (Serial.hdmatx->Lock) return;
-  // HAL_UART_Transmit_DMA(&Serial, data, len);
-
-  CDC_Transmit_FS(data, len);
+bool_t uprint(uint8_t *data, uint8_t len) {
+  /* Redirecting Output: Ok:0, Err:~0 */
+  return CDC_Transmit_FS(data, len);
 }
 
-void uprintf(const char *format, ...) {
-  // if (Serial.hdmatx->Lock) return;
-  if (((USBD_CDC_HandleTypeDef *)hUsbDeviceFS.pClassData)->TxState != 0) return;
+bool_t uprintf(const char *format, ...) {
+  if (((USBD_CDC_HandleTypeDef *)hUsbDeviceFS.pClassData)->TxState) return 1;
 
   __va(list) arg;
   __va(start)(arg, format);
@@ -50,7 +45,7 @@ void uprintf(const char *format, ...) {
   uint8_t len = vsnprintf((char *)buffer, sizeof(buffer), format, arg);
   __va(end)(arg);
 
-  uprint(buffer, len);
+  return uprint(buffer, len);
 }
 
 /************************** System Clock Config  **************************/

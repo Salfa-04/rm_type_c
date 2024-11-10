@@ -14,8 +14,8 @@ extern "C" {
 
 /// 重新导出部分函数
 void Error_Handler(void);
-void uprint(uint8_t *data, uint8_t len);
-void uprintf(const char *format, ...);
+bool_t uprint(uint8_t *data, uint8_t len);
+bool_t uprintf(const char *format, ...);
 
 #ifdef __cplusplus
 }
