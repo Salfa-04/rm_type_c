@@ -5,10 +5,7 @@
 extern "C" {
 #endif
 
-// 重新对应的数据类型
-typedef unsigned char bool_t;
-typedef float fp32;
-typedef double fp64;
+#include "type_def.h"
 
 // 定义 NULL
 #ifndef NULL
@@ -30,6 +27,8 @@ typedef double fp64;
 #define RAD_TO_ANGLE 57.295779513082320876798154814105f
 #endif
 
+extern void AHRS_get_height(fp32 *high);
+extern void AHRS_get_latitude(fp32 *latitude);
 extern fp32 AHRS_invSqrt(fp32 num);
 extern fp32 AHRS_sinf(fp32 angle);
 extern fp32 AHRS_cosf(fp32 angle);

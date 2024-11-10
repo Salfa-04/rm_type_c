@@ -6,7 +6,7 @@ set(CMAKE_PROJECT_NAME              applications)
 project(${CMAKE_PROJECT_NAME})
 add_library(${CMAKE_PROJECT_NAME} INTERFACE)
 target_link_libraries(${CMAKE_PROJECT_NAME} INTERFACE
-    start blinky loop device
+    start blinky loop device ins detect
 )
 
 
@@ -42,3 +42,20 @@ add_library(device INTERFACE)
 file(GLOB APPS_DEVICE Device/*.c)
 target_include_directories(device INTERFACE Device)
 target_sources(device INTERFACE ${APPS_DEVICE})
+
+##########################################
+### INS Task (imu)
+##########################################
+add_library(ins INTERFACE)
+file(GLOB APPS_INS InsTask/*.c)
+target_include_directories(ins INTERFACE InsTask)
+target_sources(ins INTERFACE ${APPS_INS})
+
+
+##########################################
+### Detect Task
+##########################################
+add_library(detect INTERFACE)
+file(GLOB APPS_DETECT Detect/*.c)
+target_include_directories(detect INTERFACE Detect)
+target_sources(detect INTERFACE ${APPS_DETECT})

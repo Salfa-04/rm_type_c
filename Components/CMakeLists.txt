@@ -6,7 +6,7 @@ set(CMAKE_PROJECT_NAME              components)
 project(${CMAKE_PROJECT_NAME})
 add_library(${CMAKE_PROJECT_NAME} INTERFACE)
 target_link_libraries(${CMAKE_PROJECT_NAME} INTERFACE
-    algo bled buzzer
+    algo bled buzzer imu
 )
 
 
@@ -44,6 +44,17 @@ file(GLOB COMPONENTS_BUZZER Buzzer/*.c)
 target_include_directories(buzzer INTERFACE Buzzer)
 target_sources(buzzer INTERFACE
     ${COMPONENTS_BUZZER}
+)
+
+
+##########################################
+### IMU Driver
+##########################################
+add_library(imu INTERFACE)
+file(GLOB COMPONENTS_IMU IMU/*.c)
+target_include_directories(imu INTERFACE IMU/Include)
+target_sources(imu INTERFACE
+    ${COMPONENTS_IMU}
 )
 
 

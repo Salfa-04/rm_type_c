@@ -1,8 +1,10 @@
 #include "cdc.h"
 
+#include "type_def.h"
 #include "usbd_cdc.h"
 #include "usbd_cdc_if.h"
 #include "usbd_core.h"
+#include "usbd_def.h"
 #include "usbd_desc.h"
 
 USBD_HandleTypeDef hUsbDeviceFS;

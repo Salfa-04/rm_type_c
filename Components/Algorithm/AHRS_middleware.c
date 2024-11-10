@@ -3,6 +3,32 @@
 #include "arm_math.h"
 
 /**
+ * @brief          用于获取当前高度
+ * @author         RM
+ * @param[in]      高度的指针，fp32
+ * @retval         返回空
+ */
+
+void AHRS_get_height(fp32* high) {
+  if (high != NULL) {
+    *high = 0.0f;
+  }
+}
+
+/**
+ * @brief          用于获取当前纬度
+ * @author         RM
+ * @param[in]      纬度的指针，fp32
+ * @retval         返回空
+ */
+
+void AHRS_get_latitude(fp32* latitude) {
+  if (latitude != NULL) {
+    *latitude = 22.0f;
+  }
+}
+
+/**
  * @brief          快速开方函数，
  * @author         RM
  * @param[in]      输入需要开方的浮点数，fp32

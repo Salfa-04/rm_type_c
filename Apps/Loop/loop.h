@@ -1,11 +1,11 @@
 #ifndef __LOOP_H
 #define __LOOP_H
 
+#include "stm32f4xx_hal.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "stm32f4xx_hal.h"
 
 void loop(void const *);
 
