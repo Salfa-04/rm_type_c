@@ -11,7 +11,7 @@
     }                          \
   }
 
-void PID_init(pid_type_def *pid, uint8_t mode, const fp32 PID[3], fp32 max_out,
+void PID_init(pid_t *pid, uint8_t mode, const fp32 PID[3], fp32 max_out,
               fp32 max_iout) {
   if (pid == NULL || PID == NULL) {
     return;
@@ -42,7 +42,7 @@ void PID_init(pid_type_def *pid, uint8_t mode, const fp32 PID[3], fp32 max_out,
  * @param[in]      set: 设定值
  * @retval         pid输出
  */
-fp32 PID_calc(pid_type_def *pid, fp32 ref, fp32 set) {
+fp32 PID_calc(pid_t *pid, fp32 ref, fp32 set) {
   if (pid == NULL) {
     return 0.0f;
   }
@@ -75,17 +75,7 @@ fp32 PID_calc(pid_type_def *pid, fp32 ref, fp32 set) {
   return pid->out;
 }
 
-/**
- * @brief          pid out clear
- * @param[out]     pid: PID struct data point
- * @retval         none
- */
-/**
- * @brief          pid 输出清除
- * @param[out]     pid: PID结构数据指针
- * @retval         none
- */
-void PID_clear(pid_type_def *pid) {
+void PID_clear(pid_t *pid) {
   if (pid == NULL) {
     return;
   }

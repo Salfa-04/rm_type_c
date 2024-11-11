@@ -2,11 +2,11 @@
 
 #include "freertos.h"
 
-void loop(void const *args) {
+void loop_task(void const *args) {
   (void)args;
 
   /* Infinite loop */
   for (;;) {
-    vTaskDelay(3000);
+    vTaskDelay(30000);
   }
 }

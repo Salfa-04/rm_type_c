@@ -1,22 +1,18 @@
 #include "freertos.h"
 
+#include "blinky.h"
 #include "cmsis_os.h"
+#include "detect.h"
+#include "ins.h"
+#include "loop.h"
 #include "task.h"
+#include "voltage.h"
 
 osThreadId loopTask;
-void loop(void const *);
-
+osThreadId voltageTask;
 osThreadId blinkyTask;
-void blinky(void const *);
-
-osThreadId deviceTask;
-void device(void const *);
-
 osThreadId insTask;
-void ins(void const *);
-
 osThreadId detectTask;
-void detect(void const *);
 
 void freertos_init(void) {
   /* add mutexes, ... */
@@ -30,22 +26,22 @@ void freertos_init(void) {
   /* add threads, ... */
 
   /* definition and creation of loopTask */
-  osThreadDef(LoopTask, loop, osPriorityNormal, 0, 128);
+  osThreadDef(LoopTask, loop_task, osPriorityNormal, 0, 128);
   blinkyTask = osThreadCreate(osThread(LoopTask), NULL);
 
+  /* definition and creation of VoltageTask */
+  osThreadDef(VoltageTask, voltage_task, osPriorityNormal, 0, 128);
+  blinkyTask = osThreadCreate(osThread(VoltageTask), NULL);
+
   /* definition and creation of blinkyTask */
-  osThreadDef(BlinkyTask, blinky, osPriorityNormal, 0, 128);
+  osThreadDef(BlinkyTask, blinky_task, osPriorityNormal, 0, 128);
   blinkyTask = osThreadCreate(osThread(BlinkyTask), NULL);
 
-  /* definition and creation of deviceTask */
-  osThreadDef(DeviceTask, device, osPriorityNormal, 0, 256);
-  blinkyTask = osThreadCreate(osThread(DeviceTask), NULL);
-
   /* definition and creation of InsTask */
-  osThreadDef(InsTask, ins, osPriorityNormal, 0, 512);
+  osThreadDef(InsTask, ins_task, osPriorityNormal, 0, 512);
   blinkyTask = osThreadCreate(osThread(InsTask), NULL);
 
   /* definition and creation of DetectTask */
-  osThreadDef(DetectTask, detect, osPriorityNormal, 0, 256);
+  osThreadDef(DetectTask, detect_task, osPriorityNormal, 0, 256);
   blinkyTask = osThreadCreate(osThread(DetectTask), NULL);
 }

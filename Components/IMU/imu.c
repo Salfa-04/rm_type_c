@@ -43,8 +43,8 @@ bool_t imu_init(void) {
 }
 
 void imu_tim_init(void) {
-  /* TIM4 clock enable */
-  __HAL_RCC_TIM4_CLK_ENABLE();
+  /* TIM10 clock enable */
+  __HAL_RCC_TIM10_CLK_ENABLE();
 
   TIM_OC_InitTypeDef sConfigOC = {0};
 
@@ -108,7 +108,7 @@ void imu_gpio_init(void) {
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /* EXTI0_IRQn interrupt configuration */
-  EXTI->IMR |= 0x01;
+  EXTI->IMR |= 0x01;  // Enable SWI Interrupt
   HAL_NVIC_SetPriority(EXTI0_IRQn, 6, 0);
   HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 }

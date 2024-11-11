@@ -1,6 +1,7 @@
 #include "ins.h"
 
 #include "AHRS.h"
+#include "adc.h"
 #include "detect.h"
 #include "freertos.h"
 #include "imu.h"
@@ -60,7 +61,7 @@ static const fp32 imu_temp_PID[3] = {
     TEMPERATURE_PID_KD,
 };
 
-static pid_type_def imu_temp_pid;
+static pid_t imu_temp_pid;
 // tast run time , unit s.任务运行的时间 单位 s
 static const float timing_time = 0.001f;
 
@@ -80,7 +81,7 @@ static fp32 INS_mag[3] = {0.0f, 0.0f, 0.0f};
 static fp32 INS_quat[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 static fp32 INS_angle[3] = {0.0f, 0.0f, 0.0f};
 
-void ins(void const *args) {
+void ins_task(void const *args) {
   (void)args;
 
   // wait a time
@@ -177,27 +178,36 @@ static void imu_cali_slove(fp32 gyro[3], fp32 accel[3], bmi088_t *bmi088) {
   }
 }
 
-static void imu_temp_control(fp32 temp) {
-  (void)temp, (void)first_temperate;
-  // uint16_t tempPWM;
-  // static uint8_t temp_constant_time = 0;
-  // if (first_temperate) {
-  //   PID_calc(&imu_temp_pid, temp, get_control_temperature());
-  //   if (imu_temp_pid.out < 0.0f) imu_temp_pid.out = 0.0f;
-  //   tempPWM = (uint16_t)imu_temp_pid.out;
-  //   IMU_temp_PWM(tempPWM);
-  // } else {
-  //   if (temp > get_control_temperature()) {
-  //     // 达到设置温度，将积分项设置为一半最大功率，加速收敛
-  //     if (++temp_constant_time > 200) {
-  //       first_temperate = 1;
-  //       imu_temp_pid.Iout = MPU6500_TEMP_PWM_MAX / 2.0f;
-  //     }
-  //   }
+// max control temperature of gyro,最大陀螺仪控制温度
+#define GYRO_CONST_MAX_TEMP 45.0f
 
-  //   // 在没有达到设置的温度，一直最大功率加热
-  //   IMU_temp_PWM(MPU6500_TEMP_PWM_MAX - 1);
-  // }
+static void imu_temp_control(fp32 temp) {
+  static fp32 temperature = 10.f;
+  temperature += get_temprate();
+
+  if (temperature > GYRO_CONST_MAX_TEMP) {
+    temperature = GYRO_CONST_MAX_TEMP;
+  }
+
+  uint16_t tempPWM;
+  static uint8_t temp_constant_time = 0;
+  if (first_temperate) {
+    PID_calc(&imu_temp_pid, temp, temperature);
+    if (imu_temp_pid.out < 0.0f) imu_temp_pid.out = 0.0f;
+    tempPWM = (uint16_t)imu_temp_pid.out;
+    IMU_temp_PWM(tempPWM);
+  } else {
+    if (temp > temperature) {
+      // 达到设置温度，将积分项设置为一半最大功率，加速收敛
+      if (++temp_constant_time > 200) {
+        first_temperate = 1;
+        imu_temp_pid.Iout = MPU6500_TEMP_PWM_MAX / 2.0f;
+      }
+    }
+
+    // 在没有达到设置的温度，一直最大功率加热
+    IMU_temp_PWM(MPU6500_TEMP_PWM_MAX - 1);
+  }
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {

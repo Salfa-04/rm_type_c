@@ -10,7 +10,7 @@ error_t error_list[ERROR_LIST_LENGHT + 1];
 uint32_t detect_task_stack;
 #endif
 
-void detect(void const *args) {
+void detect_task(void const *args) {
   (void)args;
 
   static uint32_t system_time;

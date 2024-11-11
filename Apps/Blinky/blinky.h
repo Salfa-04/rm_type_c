@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-void blinky(void const *args);
+void blinky_task(void const *args);
 
 #ifdef __cplusplus
 }

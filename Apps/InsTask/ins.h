@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-void ins(void const *);
+void ins_task(void const *);
 const fp32 *get_INS_quat_point(void);    /// len 4
 const fp32 *get_INS_angle_point(void);   /// len 3
 const fp32 *get_gyro_data_point(void);   /// len 3

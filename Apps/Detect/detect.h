@@ -7,6 +7,12 @@
 #define DETECT_TASK_INIT_TIME 57
 #define DETECT_CONTROL_TIME 10
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void detect_task(void const *);
+
 // 错误码以及对应设备顺序
 enum errorList {
   DBUS_TOE = 0,
@@ -48,5 +54,9 @@ typedef __packed struct {
 extern bool_t toe_is_error(uint8_t err);
 extern void detect_hook(uint8_t toe);
 extern const error_t *get_error_list_point(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __DETECT_TASK_H */

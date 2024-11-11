@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-void loop(void const *);
+void loop_task(void const *);
 
 #ifdef __cplusplus
 }

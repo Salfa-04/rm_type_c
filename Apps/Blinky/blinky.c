@@ -11,7 +11,7 @@ uint32_t RGB_flow_color[RGB_FLOW_COLOR_LENGHT + 1] = {
     0xFF0000FF, 0x0000FF00, 0xFFFF0000, 0x000000FF,
     0xFF00FF00, 0x00FF0000, 0xFF0000FF};
 
-void blinky(void const *args) {
+void blinky_task(void const *args) {
   (void)args;
 
   bled_init();

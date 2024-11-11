@@ -6,7 +6,7 @@ set(CMAKE_PROJECT_NAME              components)
 project(${CMAKE_PROJECT_NAME})
 add_library(${CMAKE_PROJECT_NAME} INTERFACE)
 target_link_libraries(${CMAKE_PROJECT_NAME} INTERFACE
-    algo bled buzzer imu
+    algo bled buzzer remtctrl adc imu
 )
 
 
@@ -24,7 +24,6 @@ target_link_libraries(algo INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/Algorithm/AHRS.lib
 )
 
-
 ##########################################
 ### Board LED Driver
 ##########################################
@@ -34,7 +33,6 @@ target_include_directories(bled INTERFACE BLED)
 target_sources(bled INTERFACE
     ${COMPONENTS_BLED}
 )
-
 
 ##########################################
 ### Buzzer Driver
@@ -46,6 +44,15 @@ target_sources(buzzer INTERFACE
     ${COMPONENTS_BUZZER}
 )
 
+##########################################
+### Remote Contral Driver
+##########################################
+add_library(remtctrl INTERFACE)
+file(GLOB COMPONENTS_REMTCTRL RemtCtrl/*.c)
+target_include_directories(remtctrl INTERFACE RemtCtrl)
+target_sources(remtctrl INTERFACE
+    ${COMPONENTS_REMTCTRL}
+)
 
 ##########################################
 ### IMU Driver
@@ -55,6 +62,16 @@ file(GLOB COMPONENTS_IMU IMU/*.c)
 target_include_directories(imu INTERFACE IMU/Include)
 target_sources(imu INTERFACE
     ${COMPONENTS_IMU}
+)
+
+##########################################
+### IMU Driver
+##########################################
+add_library(adc INTERFACE)
+file(GLOB COMPONENTS_ADC ADC/*.c)
+target_include_directories(adc INTERFACE ADC)
+target_sources(adc INTERFACE
+    ${COMPONENTS_ADC}
 )
 
 

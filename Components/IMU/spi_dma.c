@@ -9,7 +9,6 @@ DMA_HandleTypeDef hdma_spi1_tx;
 void imu_dma_init(void) {
   /* DMA controller clock enable */
   __HAL_RCC_DMA2_CLK_ENABLE();
-  __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* SPI1 DMA Init */
   hdma_spi1_rx.Instance = DMA2_Stream2;
@@ -46,6 +45,9 @@ void imu_dma_init(void) {
   /* DMA2_Stream2_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 6, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
+  /* DMA2_Stream3_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream3_IRQn, 6, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream3_IRQn);
 }
 
 void SPI_DMA_init(uint32_t tx_buf, uint32_t rx_buf, uint16_t num) {
