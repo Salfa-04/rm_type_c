@@ -1,7 +1,7 @@
 #include "adc.h"
 
-ADC_HandleTypeDef hadc1;  // MCU temperature
-ADC_HandleTypeDef hadc3;  // battery voltage
+static ADC_HandleTypeDef hadc1;  // MCU temperature
+static ADC_HandleTypeDef hadc3;  // battery voltage
 
 #define ADC_BAT_Pin GPIO_PIN_10
 #define ADC_BAT_GPIO_Port GPIOF

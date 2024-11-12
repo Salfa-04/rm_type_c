@@ -44,7 +44,7 @@ const uint8_t bmi088_gyro_init_cmd[BMI088_GYRO_CMD_NUM][2] = {
     {BMI088_GYRO_INT3_INT4_IO_MAP, BMI088_GYRO_DRDY_IO_INT3},
 };
 
-void bmi088_gpio_init(void) {
+static void bmi088_gpio_init(void) {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
@@ -81,12 +81,11 @@ void bmi088_gpio_init(void) {
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI4_IRQn, 6, 0);
   HAL_NVIC_EnableIRQ(EXTI4_IRQn);
-
   HAL_NVIC_SetPriority(EXTI9_5_IRQn, 6, 0);
   HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 }
 
-bool_t bmi088_accel_init(void) {
+static bool_t bmi088_accel_init(void) {
   uint8_t res = {0};
 
   // check commiunication
@@ -123,7 +122,7 @@ bool_t bmi088_accel_init(void) {
   return 0;
 }
 
-bool_t bmi088_gyro_init(void) {
+static bool_t bmi088_gyro_init(void) {
   uint8_t res = {0};
 
   // check commiunication

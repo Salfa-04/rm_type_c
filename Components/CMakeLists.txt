@@ -6,7 +6,7 @@ set(CMAKE_PROJECT_NAME              components)
 project(${CMAKE_PROJECT_NAME})
 add_library(${CMAKE_PROJECT_NAME} INTERFACE)
 target_link_libraries(${CMAKE_PROJECT_NAME} INTERFACE
-    algo bled buzzer remtctrl adc imu
+    algo bled buzzer remtctrl can adc imu
 )
 
 
@@ -65,7 +65,17 @@ target_sources(imu INTERFACE
 )
 
 ##########################################
-### IMU Driver
+### CAN Driver
+##########################################
+add_library(can INTERFACE)
+file(GLOB COMPONENTS_CAN CAN/*.c)
+target_include_directories(can INTERFACE CAN)
+target_sources(can INTERFACE
+    ${COMPONENTS_CAN}
+)
+
+##########################################
+### ADC Driver
 ##########################################
 add_library(adc INTERFACE)
 file(GLOB COMPONENTS_ADC ADC/*.c)

@@ -1,5 +1,5 @@
-#ifndef __BLINKY_H
-#define __BLINKY_H
+#ifndef __BLINKY_TASK_H
+#define __BLINKY_TASK_H
 
 #include "stm32f4xx_hal.h"
 
@@ -13,4 +13,4 @@ void blinky_task(void const *args);
 }
 #endif
 
-#endif /* __BLINKY_H */
+#endif /* __BLINKY_TASK_H */

@@ -109,7 +109,7 @@ void imu_gpio_init(void) {
 
   /* EXTI0_IRQn interrupt configuration */
   EXTI->IMR |= 0x01;  // Enable SWI Interrupt
-  HAL_NVIC_SetPriority(EXTI0_IRQn, 6, 0);
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 }
 

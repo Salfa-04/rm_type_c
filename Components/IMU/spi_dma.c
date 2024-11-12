@@ -3,8 +3,8 @@
 #include "stm32f4xx_hal.h"
 
 SPI_HandleTypeDef hspi1;
-DMA_HandleTypeDef hdma_spi1_rx;
-DMA_HandleTypeDef hdma_spi1_tx;
+static DMA_HandleTypeDef hdma_spi1_rx;
+static DMA_HandleTypeDef hdma_spi1_tx;
 
 void imu_dma_init(void) {
   /* DMA controller clock enable */
@@ -43,10 +43,10 @@ void imu_dma_init(void) {
   __HAL_LINKDMA(&hspi1, hdmatx, hdma_spi1_tx);
 
   /* DMA2_Stream2_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 6, 0);
+  HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
   /* DMA2_Stream3_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream3_IRQn, 6, 0);
+  HAL_NVIC_SetPriority(DMA2_Stream3_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream3_IRQn);
 }
 

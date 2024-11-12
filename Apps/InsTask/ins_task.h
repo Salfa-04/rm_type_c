@@ -1,5 +1,5 @@
-#ifndef __INS_H
-#define __INS_H
+#ifndef __INS_TASK_H
+#define __INS_TASK_H
 
 #include "type_def.h"
 
@@ -8,16 +8,12 @@ extern "C" {
 #endif
 
 void ins_task(void const *);
-const fp32 *get_INS_quat_point(void);    /// len 4
-const fp32 *get_INS_angle_point(void);   /// len 3
-const fp32 *get_gyro_data_point(void);   /// len 3
-const fp32 *get_accel_data_point(void);  /// len 3
-const fp32 *get_mag_data_point(void);    /// len 3
+// const fp32 *get_INS_quat_point(void);  /// len 4
+const fp32 *getp_angle_data(void);  /// len 3
+const fp32 *getp_gyro_data(void);   /// len 3
+const fp32 *getp_accel_data(void);  /// len 3
+// const fp32 *get_mag_data_point(void);  /// len 3
 
-void gyro_offset_calc(fp32 gyro_offset[3], fp32 gyro[3],
-                      uint16_t *offset_time_count);
-void INS_cali_gyro(fp32 cali_scale[3], fp32 cali_offset[3],
-                   uint16_t *time_count);
 void INS_set_cali_gyro(fp32 cali_scale[3], fp32 cali_offset[3]);
 
 #define SPI_DMA_GYRO_LENGHT 8
@@ -65,4 +61,4 @@ void INS_set_cali_gyro(fp32 cali_scale[3], fp32 cali_offset[3]);
 }
 #endif
 
-#endif /* __INS_H */
+#endif /* __INS_TASK_H */

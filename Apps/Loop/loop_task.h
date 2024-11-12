@@ -1,5 +1,5 @@
-#ifndef __LOOP_H
-#define __LOOP_H
+#ifndef __LOOP_TASK_H
+#define __LOOP_TASK_H
 
 #include "stm32f4xx_hal.h"
 
@@ -13,4 +13,4 @@ void loop_task(void const *);
 }
 #endif
 
-#endif /* __LOOP_H */
+#endif /* __LOOP_TASK_H */

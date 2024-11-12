@@ -1,6 +1,7 @@
 #include "main.h"
 
 #include "adc.h"
+#include "can.h"
 #include "cdc.h"
 #include "freertos.h"
 #include "remtctrl.h"
@@ -16,6 +17,9 @@ int main(void) {
   // 初始化虚拟串口
   usb_cdc_init();
   uprintf("Hello, world!\r\n");
+
+  // 初始化CAN、开启CAN中断接收
+  can_init();
 
   HAL_Delay(300);
   // 更新参考电压

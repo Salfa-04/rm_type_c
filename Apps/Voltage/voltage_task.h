@@ -1,5 +1,5 @@
-#ifndef __VOLTAGE_H
-#define __VOLTAGE_H
+#ifndef __VOLTAGE_TASK_H
+#define __VOLTAGE_TASK_H
 
 #include "stm32f4xx_hal.h"
 
@@ -14,4 +14,4 @@ uint16_t get_battery_percentage(void);
 }
 #endif
 
-#endif /* __VOLTAGE_H */
+#endif /* __VOLTAGE_TASK_H */

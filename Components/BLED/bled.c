@@ -23,7 +23,7 @@ void bled_init(void) {
   bled_gpio_init();
 }
 
-void bled_tim_init(void) {
+static void bled_tim_init(void) {
   /* TIM5 clock enable */
   __HAL_RCC_TIM5_CLK_ENABLE();
 
@@ -64,7 +64,7 @@ void bled_tim_init(void) {
   }
 }
 
-void bled_gpio_init(void) {
+static void bled_gpio_init(void) {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIOH clock enable */

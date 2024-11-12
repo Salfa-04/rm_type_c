@@ -19,7 +19,7 @@ void buzzer_init(void) {
   buzzer_gpio_init();
 }
 
-void buzzer_tim_init(void) {
+static void buzzer_tim_init(void) {
   /* TIM4 clock enable */
   __HAL_RCC_TIM4_CLK_ENABLE();
 
@@ -51,7 +51,7 @@ void buzzer_tim_init(void) {
   }
 }
 
-void buzzer_gpio_init(void) {
+static void buzzer_gpio_init(void) {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIOD clock enable */

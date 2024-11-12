@@ -1,12 +1,12 @@
 #include "freertos.h"
 
-#include "blinky.h"
+#include "blinky_task.h"
 #include "cmsis_os.h"
-#include "detect.h"
-#include "ins.h"
-#include "loop.h"
+// #include "detect_task.h"
+#include "ins_task.h"
+#include "loop_task.h"
 #include "task.h"
-#include "voltage.h"
+#include "voltage_task.h"
 
 osThreadId loopTask;
 osThreadId voltageTask;
@@ -41,7 +41,7 @@ void freertos_init(void) {
   osThreadDef(InsTask, ins_task, osPriorityNormal, 0, 512);
   blinkyTask = osThreadCreate(osThread(InsTask), NULL);
 
-  /* definition and creation of DetectTask */
-  osThreadDef(DetectTask, detect_task, osPriorityNormal, 0, 256);
-  blinkyTask = osThreadCreate(osThread(DetectTask), NULL);
+  // /* definition and creation of DetectTask */
+  // osThreadDef(DetectTask, detect_task, osPriorityNormal, 0, 256);
+  // blinkyTask = osThreadCreate(osThread(DetectTask), NULL);
 }

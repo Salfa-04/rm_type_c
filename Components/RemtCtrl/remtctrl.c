@@ -17,6 +17,7 @@ void remtctrl_init(void) {
   remtctrl_uart_init();
   remtctrl_gpio_init();
   remtctrl_dma_init();
+
   remtctrl_start();
 }
 

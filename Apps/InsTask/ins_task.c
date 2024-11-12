@@ -1,8 +1,8 @@
-#include "ins.h"
+#include "ins_task.h"
 
 #include "AHRS.h"
 #include "adc.h"
-#include "detect.h"
+// #include "detect_task.h"
 #include "freertos.h"
 #include "imu.h"
 #include "pid.h"
@@ -15,25 +15,26 @@ static bmi088_t bmi088_data;
 extern SPI_HandleTypeDef hspi1;
 static void imu_temp_control(fp32 temp);
 static void imu_cmd_spi_dma(void);
-
 static void imu_cali_slove(fp32 gyro[3], fp32 accel[3], bmi088_t *bmi088);
 
 #define IMU_temp_PWM(pwm) imu_heat_set(pwm)
+// max control temperature of gyro
+#define GYRO_CONST_MAX_TEMP 45.0f
 
 #define BMI088_BOARD_INSTALL_SPIN_MATRIX \
   {0.0f, 1.0f, 0.0f}, {-1.0f, 0.0f, 0.0f}, { 0.0f, 0.0f, 1.0f }
 
-uint8_t gyro_dma_rx_buf[SPI_DMA_GYRO_LENGHT];
+uint8_t gyro_dma_rx_buf[SPI_DMA_GYRO_LENGHT] = {0};
 uint8_t gyro_dma_tx_buf[SPI_DMA_GYRO_LENGHT] = {
     0x82, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 };
 
-uint8_t accel_dma_rx_buf[SPI_DMA_ACCEL_LENGHT];
+uint8_t accel_dma_rx_buf[SPI_DMA_ACCEL_LENGHT] = {0};
 uint8_t accel_dma_tx_buf[SPI_DMA_ACCEL_LENGHT] = {
     0x92, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 };
 
-uint8_t accel_temp_dma_rx_buf[SPI_DMA_ACCEL_TEMP_LENGHT];
+uint8_t accel_temp_dma_rx_buf[SPI_DMA_ACCEL_TEMP_LENGHT] = {0};
 uint8_t accel_temp_dma_tx_buf[SPI_DMA_ACCEL_TEMP_LENGHT] = {
     0xA2,
     0xFF,
@@ -47,14 +48,13 @@ volatile uint8_t accel_temp_update_flag = 0;
 volatile uint8_t imu_start_dma_flag = 0;
 
 static fp32 gyro_scale_factor[3][3] = {BMI088_BOARD_INSTALL_SPIN_MATRIX};
-static fp32 gyro_offset[3], gyro_cali_offset[3];
+static fp32 gyro_offset[3] = {0};
 
 static fp32 accel_scale_factor[3][3] = {BMI088_BOARD_INSTALL_SPIN_MATRIX};
-static fp32 accel_offset[3];
-// static fp32 accel_cali_offset[3];
+static fp32 accel_offset[3] = {0};
 
 static uint8_t first_temperate = 0;
-static fp32 imu_temp_PID_int[3];
+static fp32 imu_temp_PID_int[3] = {0};
 static const fp32 imu_temp_PID[3] = {
     TEMPERATURE_PID_KP,
     TEMPERATURE_PID_KI,
@@ -80,6 +80,10 @@ static fp32 INS_accel[3] = {0.0f, 0.0f, 0.0f};
 static fp32 INS_mag[3] = {0.0f, 0.0f, 0.0f};
 static fp32 INS_quat[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 static fp32 INS_angle[3] = {0.0f, 0.0f, 0.0f};
+
+const fp32 *getp_angle_data(void) { return INS_angle; }
+const fp32 *getp_gyro_data(void) { return INS_gyro; }
+const fp32 *getp_accel_data(void) { return INS_accel; }
 
 void ins_task(void const *args) {
   (void)args;
@@ -178,9 +182,6 @@ static void imu_cali_slove(fp32 gyro[3], fp32 accel[3], bmi088_t *bmi088) {
   }
 }
 
-// max control temperature of gyro,最大陀螺仪控制温度
-#define GYRO_CONST_MAX_TEMP 45.0f
-
 static void imu_temp_control(fp32 temp) {
   static fp32 temperature = 10.f;
   temperature += get_temprate();
@@ -212,12 +213,12 @@ static void imu_temp_control(fp32 temp) {
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
   if (GPIO_Pin == INT_Accel_Pin) {
-    detect_hook(BOARD_ACCEL_TOE);
+    // detect_hook(BOARD_ACCEL_TOE);
     accel_update_flag |= 1 << IMU_DR_SHFITS;
     accel_temp_update_flag |= 1 << IMU_DR_SHFITS;
     if (imu_start_dma_flag) imu_cmd_spi_dma();
   } else if (GPIO_Pin == INT_Gyro_Pin) {
-    detect_hook(BOARD_GYRO_TOE);
+    // detect_hook(BOARD_GYRO_TOE);
     gyro_update_flag |= 1 << IMU_DR_SHFITS;
     if (imu_start_dma_flag) imu_cmd_spi_dma();
   } else if (GPIO_Pin == GPIO_PIN_0) {  // 唤醒任务
@@ -306,48 +307,4 @@ void DMA2_Stream2_IRQHandler(void) {
       __HAL_GPIO_EXTI_GENERATE_SWIT(GPIO_PIN_0);
     }
   }
-}
-
-const fp32 *get_INS_quat_point(void) { return INS_quat; }
-const fp32 *get_INS_angle_point(void) { return INS_angle; }
-const fp32 *get_gyro_data_point(void) { return INS_gyro; }
-const fp32 *get_accel_data_point(void) { return INS_accel; }
-
-void gyro_offset_calc(fp32 gyro_offset[3], fp32 gyro[3],
-                      uint16_t *offset_time_count) {
-  if (gyro_offset == NULL || gyro == NULL || offset_time_count == NULL) {
-    return;
-  }
-
-  gyro_offset[0] = gyro_offset[0] - 0.0003f * gyro[0];
-  gyro_offset[1] = gyro_offset[1] - 0.0003f * gyro[1];
-  gyro_offset[2] = gyro_offset[2] - 0.0003f * gyro[2];
-  (*offset_time_count)++;
-}
-
-void INS_cali_gyro(fp32 cali_scale[3], fp32 cali_offset[3],
-                   uint16_t *time_count) {
-  if (*time_count == 0) {
-    gyro_offset[0] = gyro_cali_offset[0];
-    gyro_offset[1] = gyro_cali_offset[1];
-    gyro_offset[2] = gyro_cali_offset[2];
-  }
-
-  gyro_offset_calc(gyro_offset, INS_gyro, time_count);
-  cali_offset[0] = gyro_offset[0];
-  cali_offset[1] = gyro_offset[1];
-  cali_offset[2] = gyro_offset[2];
-  cali_scale[0] = 1.0f;
-  cali_scale[1] = 1.0f;
-  cali_scale[2] = 1.0f;
-}
-
-void INS_set_cali_gyro(fp32 cali_scale[3], fp32 cali_offset[3]) {
-  (void)cali_scale;
-  gyro_cali_offset[0] = cali_offset[0];
-  gyro_cali_offset[1] = cali_offset[1];
-  gyro_cali_offset[2] = cali_offset[2];
-  gyro_offset[0] = gyro_cali_offset[0];
-  gyro_offset[1] = gyro_cali_offset[1];
-  gyro_offset[2] = gyro_cali_offset[2];
 }

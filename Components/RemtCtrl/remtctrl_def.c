@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-#include "detect.h"
+// #include "detect_task.h"
 #include "remtctrl.h"
 #include "type_def.h"
 
@@ -71,7 +71,7 @@ void remtctrl_dma_init(void) {
   __HAL_LINKDMA(&huart3, hdmarx, hdma_usart3_rx);
 
   /* DMA1_Stream1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream1_IRQn, 4, 0);
+  HAL_NVIC_SetPriority(DMA1_Stream1_IRQn, 3, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream1_IRQn);
 }
 
@@ -197,7 +197,7 @@ void USART3_IRQHandler(void) {
 
       if (this_time_rx_len == RC_FRAME_LENGTH) {
         sbus_to_rc(sbus_rx_buf[0], remt_ctrl);
-        detect_hook(DBUS_TOE);  // 记录数据接收时间
+        // detect_hook(DBUS_TOE);  // 记录数据接收时间
         sbus_to_print(sbus_rx_buf[0]);
       }
     } else {
@@ -213,7 +213,7 @@ void USART3_IRQHandler(void) {
 
       if (this_time_rx_len == RC_FRAME_LENGTH) {
         sbus_to_rc(sbus_rx_buf[1], remt_ctrl);
-        detect_hook(DBUS_TOE);  // 记录数据接收时间
+        // detect_hook(DBUS_TOE);  // 记录数据接收时间
         sbus_to_print(sbus_rx_buf[1]);
       }
     }
