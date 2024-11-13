@@ -2,7 +2,7 @@
 
 #include "stm32f4xx_hal.h"
 
-SPI_HandleTypeDef hspi1;
+SPI_HandleTypeDef imu_spi_v;  // SPI1
 static DMA_HandleTypeDef hdma_spi1_rx;
 static DMA_HandleTypeDef hdma_spi1_tx;
 
@@ -39,8 +39,8 @@ void imu_dma_init(void) {
     Error_Handler();
   }
 
-  __HAL_LINKDMA(&hspi1, hdmarx, hdma_spi1_rx);
-  __HAL_LINKDMA(&hspi1, hdmatx, hdma_spi1_tx);
+  __HAL_LINKDMA(&imu_spi_v, hdmarx, hdma_spi1_rx);
+  __HAL_LINKDMA(&imu_spi_v, hdmatx, hdma_spi1_tx);
 
   /* DMA2_Stream2_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 5, 0);
@@ -51,10 +51,10 @@ void imu_dma_init(void) {
 }
 
 void SPI_DMA_init(uint32_t tx_buf, uint32_t rx_buf, uint16_t num) {
-  SET_BIT(hspi1.Instance->CR2, SPI_CR2_TXDMAEN);
-  SET_BIT(hspi1.Instance->CR2, SPI_CR2_RXDMAEN);
+  SET_BIT(imu_spi_v.Instance->CR2, SPI_CR2_TXDMAEN);
+  SET_BIT(imu_spi_v.Instance->CR2, SPI_CR2_RXDMAEN);
 
-  __HAL_SPI_ENABLE(&hspi1);
+  __HAL_SPI_ENABLE(&imu_spi_v);
 
   // disable DMA
   __HAL_DMA_DISABLE(&hdma_spi1_rx);
@@ -96,19 +96,27 @@ void SPI_DMA_enable(uint32_t tx_buf, uint32_t rx_buf, uint16_t ndtr) {
     __HAL_DMA_DISABLE(&hdma_spi1_tx);
   }
 
-  __HAL_DMA_CLEAR_FLAG(hspi1.hdmarx, __HAL_DMA_GET_TC_FLAG_INDEX(hspi1.hdmarx));
-  __HAL_DMA_CLEAR_FLAG(hspi1.hdmarx, __HAL_DMA_GET_HT_FLAG_INDEX(hspi1.hdmarx));
-  __HAL_DMA_CLEAR_FLAG(hspi1.hdmarx, __HAL_DMA_GET_TE_FLAG_INDEX(hspi1.hdmarx));
-  __HAL_DMA_CLEAR_FLAG(hspi1.hdmarx,
-                       __HAL_DMA_GET_DME_FLAG_INDEX(hspi1.hdmarx));
-  __HAL_DMA_CLEAR_FLAG(hspi1.hdmarx, __HAL_DMA_GET_FE_FLAG_INDEX(hspi1.hdmarx));
+  __HAL_DMA_CLEAR_FLAG(imu_spi_v.hdmarx,
+                       __HAL_DMA_GET_TC_FLAG_INDEX(imu_spi_v.hdmarx));
+  __HAL_DMA_CLEAR_FLAG(imu_spi_v.hdmarx,
+                       __HAL_DMA_GET_HT_FLAG_INDEX(imu_spi_v.hdmarx));
+  __HAL_DMA_CLEAR_FLAG(imu_spi_v.hdmarx,
+                       __HAL_DMA_GET_TE_FLAG_INDEX(imu_spi_v.hdmarx));
+  __HAL_DMA_CLEAR_FLAG(imu_spi_v.hdmarx,
+                       __HAL_DMA_GET_DME_FLAG_INDEX(imu_spi_v.hdmarx));
+  __HAL_DMA_CLEAR_FLAG(imu_spi_v.hdmarx,
+                       __HAL_DMA_GET_FE_FLAG_INDEX(imu_spi_v.hdmarx));
 
-  __HAL_DMA_CLEAR_FLAG(hspi1.hdmatx, __HAL_DMA_GET_TC_FLAG_INDEX(hspi1.hdmatx));
-  __HAL_DMA_CLEAR_FLAG(hspi1.hdmatx, __HAL_DMA_GET_HT_FLAG_INDEX(hspi1.hdmatx));
-  __HAL_DMA_CLEAR_FLAG(hspi1.hdmatx, __HAL_DMA_GET_TE_FLAG_INDEX(hspi1.hdmatx));
-  __HAL_DMA_CLEAR_FLAG(hspi1.hdmatx,
-                       __HAL_DMA_GET_DME_FLAG_INDEX(hspi1.hdmatx));
-  __HAL_DMA_CLEAR_FLAG(hspi1.hdmatx, __HAL_DMA_GET_FE_FLAG_INDEX(hspi1.hdmatx));
+  __HAL_DMA_CLEAR_FLAG(imu_spi_v.hdmatx,
+                       __HAL_DMA_GET_TC_FLAG_INDEX(imu_spi_v.hdmatx));
+  __HAL_DMA_CLEAR_FLAG(imu_spi_v.hdmatx,
+                       __HAL_DMA_GET_HT_FLAG_INDEX(imu_spi_v.hdmatx));
+  __HAL_DMA_CLEAR_FLAG(imu_spi_v.hdmatx,
+                       __HAL_DMA_GET_TE_FLAG_INDEX(imu_spi_v.hdmatx));
+  __HAL_DMA_CLEAR_FLAG(imu_spi_v.hdmatx,
+                       __HAL_DMA_GET_DME_FLAG_INDEX(imu_spi_v.hdmatx));
+  __HAL_DMA_CLEAR_FLAG(imu_spi_v.hdmatx,
+                       __HAL_DMA_GET_FE_FLAG_INDEX(imu_spi_v.hdmatx));
 
   hdma_spi1_rx.Instance->M0AR = rx_buf;
   hdma_spi1_tx.Instance->M0AR = tx_buf;
@@ -118,4 +126,15 @@ void SPI_DMA_enable(uint32_t tx_buf, uint32_t rx_buf, uint16_t ndtr) {
 
   __HAL_DMA_ENABLE(&hdma_spi1_rx);
   __HAL_DMA_ENABLE(&hdma_spi1_tx);
+}
+
+/// 后续会被其他文件复写, 故为虚函数
+__weak void DMA2_Stream2_IRQHandler(void) {
+  /* DMA2_Stream2 global interrupt handler */
+  HAL_DMA_IRQHandler(&hdma_spi1_rx);
+}
+
+void DMA2_Stream3_IRQHandler(void) {
+  /* DMA2_Stream3 global interrupt handler */
+  HAL_DMA_IRQHandler(&hdma_spi1_tx);
 }

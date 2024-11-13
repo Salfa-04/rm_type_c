@@ -1,9 +1,11 @@
 #include "main.h"
 
 #include "adc.h"
+#include "buzzer.h"
 #include "can.h"
 #include "cdc.h"
 #include "freertos.h"
+#include "laser.h"
 #include "remtctrl.h"
 #include "type_def.h"
 
@@ -12,18 +14,22 @@ int main(void) {
 
   // 加载遥控器
   remtctrl_init();
-  // 温度、电池电压、硬件版本
+  // 加载温度、电池电压、硬件版本
   adc_init();
   // 初始化虚拟串口
   usb_cdc_init();
-  uprintf("Hello, world!\r\n");
-
   // 初始化CAN、开启CAN中断接收
   can_init();
+  // 激光电源初始化
+  laser_init();
+  // 蜂鸣器初始化
+  buzzer_init();
 
   HAL_Delay(300);
   // 更新参考电压
   adc_update_vref();
+
+  uprintf("Hello, world!\r\n");
 
   freertos_init();
   osKernelStart();

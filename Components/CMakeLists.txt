@@ -6,7 +6,8 @@ set(CMAKE_PROJECT_NAME              components)
 project(${CMAKE_PROJECT_NAME})
 add_library(${CMAKE_PROJECT_NAME} INTERFACE)
 target_link_libraries(${CMAKE_PROJECT_NAME} INTERFACE
-    algo bled buzzer remtctrl can adc imu
+    algo bled buzzer laser adc can imu
+    remtctrl refuart
 )
 
 
@@ -45,23 +46,23 @@ target_sources(buzzer INTERFACE
 )
 
 ##########################################
-### Remote Contral Driver
+### Laser Driver
 ##########################################
-add_library(remtctrl INTERFACE)
-file(GLOB COMPONENTS_REMTCTRL RemtCtrl/*.c)
-target_include_directories(remtctrl INTERFACE RemtCtrl)
-target_sources(remtctrl INTERFACE
-    ${COMPONENTS_REMTCTRL}
+add_library(laser INTERFACE)
+file(GLOB COMPONENTS_LAZER Laser/*.c)
+target_include_directories(laser INTERFACE Laser)
+target_sources(laser INTERFACE
+    ${COMPONENTS_LAZER}
 )
 
 ##########################################
-### IMU Driver
+### ADC Driver
 ##########################################
-add_library(imu INTERFACE)
-file(GLOB COMPONENTS_IMU IMU/*.c)
-target_include_directories(imu INTERFACE IMU/Include)
-target_sources(imu INTERFACE
-    ${COMPONENTS_IMU}
+add_library(adc INTERFACE)
+file(GLOB COMPONENTS_ADC ADC/*.c)
+target_include_directories(adc INTERFACE ADC)
+target_sources(adc INTERFACE
+    ${COMPONENTS_ADC}
 )
 
 ##########################################
@@ -75,13 +76,33 @@ target_sources(can INTERFACE
 )
 
 ##########################################
-### ADC Driver
+### IMU Driver
 ##########################################
-add_library(adc INTERFACE)
-file(GLOB COMPONENTS_ADC ADC/*.c)
-target_include_directories(adc INTERFACE ADC)
-target_sources(adc INTERFACE
-    ${COMPONENTS_ADC}
+add_library(imu INTERFACE)
+file(GLOB COMPONENTS_IMU IMU/*.c)
+target_include_directories(imu INTERFACE IMU/Include)
+target_sources(imu INTERFACE
+    ${COMPONENTS_IMU}
+)
+
+##########################################
+### Remote Contral Driver
+##########################################
+add_library(remtctrl INTERFACE)
+file(GLOB COMPONENTS_REMTCTRL RemtCtrl/*.c)
+target_include_directories(remtctrl INTERFACE RemtCtrl)
+target_sources(remtctrl INTERFACE
+    ${COMPONENTS_REMTCTRL}
+)
+
+##########################################
+### Referee Driver
+##########################################
+add_library(refuart INTERFACE)
+file(GLOB COMPONENTS_REFUART RefUART/*.c)
+target_include_directories(refuart INTERFACE RefUART)
+target_sources(refuart INTERFACE
+    ${COMPONENTS_REFUART}
 )
 
 
@@ -91,16 +112,7 @@ target_sources(adc INTERFACE
 ##########################################
 
 add_library(example INTERFACE)
-
 file(GLOB COMPONENTS_EXAMPLE example/*.c)
-
-target_compile_definitions(example INTERFACE
-)
-
-target_include_directories(example INTERFACE
-    Example/Include
-)
-
-target_sources(example INTERFACE
-    ${COMPONENTS_EXAMPLE}
-)
+target_compile_definitions(example INTERFACE)
+target_include_directories(example INTERFACE Example/Include)
+target_sources(example INTERFACE ${COMPONENTS_EXAMPLE})

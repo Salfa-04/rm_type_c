@@ -9,6 +9,9 @@
 extern "C" {
 #endif
 
+/// SPI1
+extern SPI_HandleTypeDef imu_spi_v;
+
 typedef struct {
   float x, y, z;
 } accel_t;

@@ -111,7 +111,7 @@ void remtctrl_restart(uint16_t dma_buf_num) {
   __HAL_UART_ENABLE(&huart3);
 }
 
-bool_t remtctrl_data_is_err(RC_t remtctrl) {
+bool_t remtctrl_data_is_err(remt_t remtctrl) {
   // 使用了go to语句 方便出错统一处理遥控器变量数据归零
   if (abs(remtctrl.rc.ch[0]) > RC_CHANNAL_ERROR_VALUE) goto error;
   if (abs(remtctrl.rc.ch[1]) > RC_CHANNAL_ERROR_VALUE) goto error;
@@ -137,7 +137,7 @@ error:
   return 1;
 }
 
-static void sbus_to_rc(volatile const uint8_t *sbus_buf, RC_t *remt_ctrl) {
+static void sbus_to_rc(volatile const uint8_t *sbus_buf, remt_t *remt_ctrl) {
   if (sbus_buf == NULL || remt_ctrl == NULL) {
     return;
   }
@@ -182,7 +182,7 @@ void USART3_IRQHandler(void) {
   } else if (USART3->SR & UART_FLAG_IDLE) {
     static uint16_t this_time_rx_len = 0;
     __HAL_UART_CLEAR_PEFLAG(&huart3);
-    RC_t *remt_ctrl = (RC_t *)get_remote_control_point();
+    remt_t *remt_ctrl = (remt_t *)get_remote_control_point();
 
     if ((hdma_usart3_rx.Instance->CR & DMA_SxCR_CT) == RESET) {
       /* Current memory buffer used is Memory 0 */

@@ -4,7 +4,6 @@
 #include "type_def.h"
 
 static TIM_HandleTypeDef htim10;
-extern SPI_HandleTypeDef hspi1;
 
 static void imu_tim_init(void);
 static void imu_gpio_init(void);
@@ -117,28 +116,37 @@ void imu_spi_init(void) {
   /* SPI1 clock enable */
   __HAL_RCC_SPI1_CLK_ENABLE();
 
-  hspi1.Instance = SPI1;
-  hspi1.Init.Mode = SPI_MODE_MASTER;
-  hspi1.Init.Direction = SPI_DIRECTION_2LINES;
-  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
-  hspi1.Init.CLKPolarity = SPI_POLARITY_HIGH;
-  hspi1.Init.CLKPhase = SPI_PHASE_2EDGE;
-  hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256;
-  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
-  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
-  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-  hspi1.Init.CRCPolynomial = 10;
-  if (HAL_SPI_Init(&hspi1) != HAL_OK) {
+  imu_spi_v.Instance = SPI1;
+  imu_spi_v.Init.Mode = SPI_MODE_MASTER;
+  imu_spi_v.Init.Direction = SPI_DIRECTION_2LINES;
+  imu_spi_v.Init.DataSize = SPI_DATASIZE_8BIT;
+  imu_spi_v.Init.CLKPolarity = SPI_POLARITY_HIGH;
+  imu_spi_v.Init.CLKPhase = SPI_PHASE_2EDGE;
+  imu_spi_v.Init.NSS = SPI_NSS_SOFT;
+  imu_spi_v.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256;
+  imu_spi_v.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  imu_spi_v.Init.TIMode = SPI_TIMODE_DISABLE;
+  imu_spi_v.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  imu_spi_v.Init.CRCPolynomial = 10;
+  if (HAL_SPI_Init(&imu_spi_v) != HAL_OK) {
     Error_Handler();
   }
+
+  /* SPI1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(SPI1_IRQn, 6, 0);
+  HAL_NVIC_EnableIRQ(SPI1_IRQn);
 }
 
 void imu_bmi088_read(uint8_t tx_data, uint8_t* rx_data) {
-  HAL_SPI_TransmitReceive(&hspi1, &tx_data, rx_data, 1, 1000);
+  HAL_SPI_TransmitReceive(&imu_spi_v, &tx_data, rx_data, 1, 1000);
 }
 
 void EXTI0_IRQHandler(void) {
   /* EXTI line0 interrupt handler */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
+}
+
+void SPI1_IRQHandler(void) {
+  /* SPI1 global interrupt handler */
+  HAL_SPI_IRQHandler(&imu_spi_v);
 }

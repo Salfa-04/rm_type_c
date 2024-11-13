@@ -12,7 +12,7 @@
 static TaskHandle_t INS_task_local_handler;
 static bmi088_t bmi088_data;
 
-extern SPI_HandleTypeDef hspi1;
+extern SPI_HandleTypeDef imu_spi_v;
 static void imu_temp_control(fp32 temp);
 static void imu_cmd_spi_dma(void);
 static void imu_cali_slove(fp32 gyro[3], fp32 accel[3], bmi088_t *bmi088);
@@ -112,8 +112,8 @@ void ins_task(void const *args) {
   INS_task_local_handler = xTaskGetHandle(pcTaskGetName(NULL));
 
   // 设置SPI频率
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
-  if (HAL_SPI_Init(&hspi1) != HAL_OK) Error_Handler();
+  imu_spi_v.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+  if (HAL_SPI_Init(&imu_spi_v) != HAL_OK) Error_Handler();
   SPI_DMA_init((uint32_t)gyro_dma_tx_buf, (uint32_t)gyro_dma_rx_buf,
                SPI_DMA_GYRO_LENGHT);
 
@@ -233,8 +233,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 static void imu_cmd_spi_dma(void) {
   // 开启陀螺仪的DMA传输
   if ((gyro_update_flag & (1 << IMU_DR_SHFITS)) &&
-      !(hspi1.hdmatx->Instance->CR & DMA_SxCR_EN) &&
-      !(hspi1.hdmarx->Instance->CR & DMA_SxCR_EN) &&
+      !(imu_spi_v.hdmatx->Instance->CR & DMA_SxCR_EN) &&
+      !(imu_spi_v.hdmarx->Instance->CR & DMA_SxCR_EN) &&
       !(accel_update_flag & (1 << IMU_SPI_SHFITS)) &&
       !(accel_temp_update_flag & (1 << IMU_SPI_SHFITS))) {
     gyro_update_flag &= ~(1 << IMU_DR_SHFITS);
@@ -247,8 +247,8 @@ static void imu_cmd_spi_dma(void) {
 
   // 开启加速度计的DMA传输
   if ((accel_update_flag & (1 << IMU_DR_SHFITS)) &&
-      !(hspi1.hdmatx->Instance->CR & DMA_SxCR_EN) &&
-      !(hspi1.hdmarx->Instance->CR & DMA_SxCR_EN) &&
+      !(imu_spi_v.hdmatx->Instance->CR & DMA_SxCR_EN) &&
+      !(imu_spi_v.hdmarx->Instance->CR & DMA_SxCR_EN) &&
       !(gyro_update_flag & (1 << IMU_SPI_SHFITS)) &&
       !(accel_temp_update_flag & (1 << IMU_SPI_SHFITS))) {
     accel_update_flag &= ~(1 << IMU_DR_SHFITS);
@@ -260,8 +260,8 @@ static void imu_cmd_spi_dma(void) {
   }
 
   if ((accel_temp_update_flag & (1 << IMU_DR_SHFITS)) &&
-      !(hspi1.hdmatx->Instance->CR & DMA_SxCR_EN) &&
-      !(hspi1.hdmarx->Instance->CR & DMA_SxCR_EN) &&
+      !(imu_spi_v.hdmatx->Instance->CR & DMA_SxCR_EN) &&
+      !(imu_spi_v.hdmarx->Instance->CR & DMA_SxCR_EN) &&
       !(gyro_update_flag & (1 << IMU_SPI_SHFITS)) &&
       !(accel_update_flag & (1 << IMU_SPI_SHFITS))) {
     accel_temp_update_flag &= ~(1 << IMU_DR_SHFITS);
@@ -275,10 +275,10 @@ static void imu_cmd_spi_dma(void) {
 }
 
 void DMA2_Stream2_IRQHandler(void) {
-  if (__HAL_DMA_GET_FLAG(hspi1.hdmarx,
-                         __HAL_DMA_GET_TC_FLAG_INDEX(hspi1.hdmarx)) != RESET) {
-    __HAL_DMA_CLEAR_FLAG(hspi1.hdmarx,
-                         __HAL_DMA_GET_TC_FLAG_INDEX(hspi1.hdmarx));
+  if (__HAL_DMA_GET_FLAG(imu_spi_v.hdmarx, __HAL_DMA_GET_TC_FLAG_INDEX(
+                                               imu_spi_v.hdmarx)) != RESET) {
+    __HAL_DMA_CLEAR_FLAG(imu_spi_v.hdmarx,
+                         __HAL_DMA_GET_TC_FLAG_INDEX(imu_spi_v.hdmarx));
 
     // 陀螺仪读取完毕
     if (gyro_update_flag & (1 << IMU_SPI_SHFITS)) {

@@ -57,11 +57,11 @@ typedef __packed struct {
     uint16_t v;
   } key;
 
-} RC_t;
+} remtctrl_t;
 
 void remtctrl_init(void);
-const RC_t *get_remote_control_point(void);
-bool_t RC_data_is_error(RC_t remtctrl);
+const remtctrl_t *get_remote_control_point(void);
+bool_t RC_data_is_error(remtctrl_t remtctrl);
 void slove_RC_lost(void);
 void slove_data_error(void);
 void sbus_to_print(uint8_t *sbus);
