@@ -52,7 +52,7 @@
 #define TRIGGER_READY_ANGLE_PID_MAX_IOUT 3.14  // 参数怎么确定
 #define TRIGGER_READY_SPEED_PID_MAX_OUT 3.14   // 参数怎么确定
 #define TRIGGER_READY_SPEED_PID_MAX_IOUT 3.14  // 参数怎么确定
-/// 我不知道这个参数怎么确定！！！
+/// 我也不知道这个参数怎么确定！！！
 
 #define KEY_OFF_JUGUE_TIME 500
 
@@ -70,16 +70,18 @@
 #define PI_TEN 1.2f  // 0.4186f//0.314f
 
 // 拨弹轮电机速度环PID
-#define TRIGGER_SPEED_PID_KP 30.0f  // 20.0f//30.0f
-#define TRIGGER_SPEED_PID_KI 4.0f   // 3.1f//1.20f
-#define TRIGGER_SPEED_PID_KD 1.0f   // 0.1f
+#define TRIG_SPEED_KP 30.0f  // 20.0f//30.0f
+#define TRIG_SPEED_KI 4.0f   // 3.1f//1.20f
+#define TRIG_SPEED_KD 1.0f   // 0.1f
+
 #define TRIGGER_SPEED_PID_MAX_KP 16000.0f
 #define TRIGGER_SPEED_PID_MAX_KI 2000.0f
 
 // 拨弹轮电机角度环PID
-#define TRIGGER_ANGLE_PID_KP 2500.0f
-#define TRIGGER_ANGLE_PID_KI 16.0f         // 15.0f//0.0f
-#define TRIGGER_ANGLE_PID_KD 9.0f          // 10.0f
+#define TRIG_ANGLE_KP 2500.0f
+#define TRIG_ANGLE_KI 16.0f  // 15.0f//0.0f
+#define TRIG_ANGLE_KD 9.0f   // 10.0f
+
 #define TRIGGER_ANGLE_PID_MAX_KP 80000.0f  // 3250.0f
 #define TRIGGER_ANGLE_PID_MAX_KI 10000.0f  // 0.0f
 
@@ -121,6 +123,7 @@
 // SHOOT_DONE状态下检测微动开关松开时间，防止误触发
 #define SHOOT_DONE_KEY_OFF_TIME_time 500
 
+// 拨弹盘电机卡弹标志
 #define BAKE_TIME_OVER 1000
 
 #ifdef __cplusplus
@@ -137,7 +140,7 @@ typedef enum {
   SHOOT_DONE = 5,      // 一次射击完毕
 
   /// 卡弹状态
-  SHOOT_BULLET_STOP,  // 弹盘电机被卡弹
+  SHOOT_BULLET_STOP,  // 拨弹盘电机被卡弹
   SHOOT_FRIC_STOP,    // 摩擦轮电机被卡弹
 } shoot_mode_e;
 
@@ -147,6 +150,7 @@ typedef struct {
   shoot_mode_e last_shoot_mode;
 
   // 摩擦轮准备就绪时间, 用于判断是否卡弹
+  // 数值大于 1000tick 被认为摩擦轮卡弹
   uint32_t shoot_ready_fric_time;
 
   ///! 遥控器数据
@@ -167,7 +171,7 @@ typedef struct {
 
   fp32 add_angle, angle_set;
   int16_t trigger_flag;
-  int return_back_flag;
+  int return_back_flag;  // 退弹标志
   fp32 last_angle;
 
   ///! 摩擦轮, 发射电机
@@ -179,15 +183,11 @@ typedef struct {
   ///! 键盘按键
   bool_t press_l, last_press_l;
   bool_t press_r, last_press_r;
-  uint16_t press_l_time;
-  uint16_t press_r_time;
-  uint16_t rc_s_time;
 
   uint16_t block_time;
-  uint16_t reverse_time;
-  // bool_t move_flag;
 
-  bool_t key;  // 发弹口处微动开关; 1: 按下, 0: 未按下
+  // 发弹口处微动开关; 1: 按下, 0: 未按下
+  bool_t key;
 
   int key_time;
 

@@ -2,7 +2,6 @@
 
 #include "AHRS.h"
 #include "adc.h"
-// #include "detect_task.h"
 #include "freertos.h"
 #include "imu.h"
 #include "pid.h"
