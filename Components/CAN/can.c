@@ -18,13 +18,13 @@ void can_init(void) {
 }
 
 // motor data read
-#define GET_MOT_MEASURE(ptr, data)                                 \
-  {                                                                \
-    (ptr)->last_ecd = (ptr)->ecd;                                  \
-    (ptr)->ecd = (uint16_t)((data)[0] << 8 | (data)[1]);           \
-    (ptr)->speed_rpm = (uint16_t)((data)[2] << 8 | (data)[3]);     \
-    (ptr)->given_current = (uint16_t)((data)[4] << 8 | (data)[5]); \
-    (ptr)->temperate = (data)[6];                                  \
+#define GET_MOT_MEASURE(ptr, data)                             \
+  {                                                            \
+    (ptr)->last_ecd = (ptr)->ecd;                              \
+    (ptr)->ecd = (uint16_t)((data)[0] << 8 | (data)[1]);       \
+    (ptr)->speed_rpm = (uint16_t)((data)[2] << 8 | (data)[3]); \
+    (ptr)->current = (uint16_t)((data)[4] << 8 | (data)[5]);   \
+    (ptr)->temperate = (data)[6];                              \
   }
 
 /** 电机数据:
@@ -58,7 +58,7 @@ static uint8_t capci_can_send_data[8];
 /// 控制电机电流: 0x205, 0x206, 0x207 (CAN2)
 /// yaw:    6020电机控制电流,   范围  [-30000, 30000]
 /// pitch:  6020电机控制电流,   范围  [-30000, 30000]
-/// trig:   2006电机控制电流,   范围  [-10000, 10000]
+/// trig:   3508电机控制电流,   范围  [-10000, 10000]
 /// rev: 保留
 ///
 /// yaw: 云台yaw轴

@@ -111,8 +111,7 @@ void remtctrl_restart(uint16_t dma_buf_num) {
   __HAL_UART_ENABLE(&huart3);
 }
 
-bool_t remtctrl_data_is_err(remt_t remtctrl) {
-  // 使用了go to语句 方便出错统一处理遥控器变量数据归零
+bool_t remtctrl_data_is_err(remtctrl_t remtctrl) {
   if (abs(remtctrl.rc.ch[0]) > RC_CHANNAL_ERROR_VALUE) goto error;
   if (abs(remtctrl.rc.ch[1]) > RC_CHANNAL_ERROR_VALUE) goto error;
   if (abs(remtctrl.rc.ch[2]) > RC_CHANNAL_ERROR_VALUE) goto error;
@@ -137,33 +136,35 @@ error:
   return 1;
 }
 
-static void sbus_to_rc(volatile const uint8_t *sbus_buf, remt_t *remt_ctrl) {
+static void sbus_to_rc(const uint8_t *sbus_buf, remtctrl_t *remt_ctrl) {
   if (sbus_buf == NULL || remt_ctrl == NULL) {
     return;
   }
 
-  //!< Channel 0, 1, 2, 3
+  //!< Channel 0, 1, 2, 3: -660 ~ 660
   remt_ctrl->rc.ch[0] = (sbus_buf[0] | (sbus_buf[1] << 8)) & 0x07ff;
   remt_ctrl->rc.ch[1] = ((sbus_buf[1] >> 3) | (sbus_buf[2] << 5)) & 0x07ff;
   remt_ctrl->rc.ch[2] =
       ((sbus_buf[2] >> 6) | (sbus_buf[3] << 2) | (sbus_buf[4] << 10)) & 0x07ff;
   remt_ctrl->rc.ch[3] = ((sbus_buf[4] >> 1) | (sbus_buf[5] << 7)) & 0x07ff;
 
-  //!< Switch left, right
+  //!< Switch right, left: UP: 1, MID: 3, DOWN: 2
   remt_ctrl->rc.s[0] = ((sbus_buf[5] >> 4) & 0x0003);
   remt_ctrl->rc.s[1] = ((sbus_buf[5] >> 4) & 0x000C) >> 2;
 
-  //!< Mouse X axis, Y axis, Z axis
+  //!< Mouse X axis, Y axis, Z axis: -32768 ~ 32767
   remt_ctrl->mouse.x = sbus_buf[6] | (sbus_buf[7] << 8);
   remt_ctrl->mouse.y = sbus_buf[8] | (sbus_buf[9] << 8);
   remt_ctrl->mouse.z = sbus_buf[10] | (sbus_buf[11] << 8);
 
-  //!< Mouse IS Left Press, IS Right Press
+  //!< Mouse IS Left Press, IS Right Press: 1: HOLD, 0: FREE
   remt_ctrl->mouse.press_l = sbus_buf[12];
   remt_ctrl->mouse.press_r = sbus_buf[13];
 
   //!< KeyBoard value and NULL
   remt_ctrl->key.v = sbus_buf[14] | (sbus_buf[15] << 8);
+
+  //!< Channel 4
   remt_ctrl->rc.ch[4] = sbus_buf[16] | (sbus_buf[17] << 8);
 
   //! set the offset value of the remote control channel
@@ -176,49 +177,52 @@ static void sbus_to_rc(volatile const uint8_t *sbus_buf, remt_t *remt_ctrl) {
 
 // 串口中断
 void USART3_IRQHandler(void) {
-  if (huart3.Instance->SR & UART_FLAG_RXNE)  // 接收到数据
-  {
-    __HAL_UART_CLEAR_PEFLAG(&huart3);
-  } else if (USART3->SR & UART_FLAG_IDLE) {
-    static uint16_t this_time_rx_len = 0;
-    __HAL_UART_CLEAR_PEFLAG(&huart3);
-    remt_t *remt_ctrl = (remt_t *)get_remote_control_point();
+  if (huart3.Instance->SR & UART_FLAG_RXNE) {
+    __HAL_UART_CLEAR_PEFLAG(&huart3);  //! 串口收到数据
+  } else if (huart3.Instance->SR & UART_FLAG_IDLE) {
+    __HAL_UART_CLEAR_PEFLAG(&huart3);  //! 串口接收完毕
+    static uint16_t len = 0;           // 此次接收数据长度
+    remtctrl_t *remt_ctrl = (remtctrl_t *)getp_remtctrl();
 
-    if ((hdma_usart3_rx.Instance->CR & DMA_SxCR_CT) == RESET) {
-      /* Current memory buffer used is Memory 0 */
-      __HAL_DMA_DISABLE(&hdma_usart3_rx);
+    ///! 判断当前使用的DMA缓冲区, 双缓冲区
+
+    if ((hdma_usart3_rx.Instance->CR & DMA_SxCR_CT) == RESET)
+    //! Current memory buffer used is Memory 0
+    {
+      __HAL_DMA_DISABLE(&hdma_usart3_rx);  // disable DMA buffer 0
       // get receive data length, length = set_data_length - remain_length
-      this_time_rx_len = SBUS_RX_BUF_NUM - hdma_usart3_rx.Instance->NDTR;
-      // reset set_data_lenght
-      hdma_usart3_rx.Instance->NDTR = SBUS_RX_BUF_NUM;
-      // set memory buffer 1
-      hdma_usart3_rx.Instance->CR |= DMA_SxCR_CT;
+      len = SBUS_RX_BUF_NUM - hdma_usart3_rx.Instance->NDTR;
+      hdma_usart3_rx.Instance->NDTR = SBUS_RX_BUF_NUM;  // reset set_data_lenght
+      hdma_usart3_rx.Instance->CR |= DMA_SxCR_CT;       // set memory buffer 1
       __HAL_DMA_ENABLE(&hdma_usart3_rx);
 
-      if (this_time_rx_len == RC_FRAME_LENGTH) {
+      if (len == RC_FRAME_LENGTH) {
         sbus_to_rc(sbus_rx_buf[0], remt_ctrl);
-        // detect_hook(DBUS_TOE);  // 记录数据接收时间
         sbus_to_print(sbus_rx_buf[0]);
       }
-    } else {
-      /* Current memory buffer used is Memory 1 */
-      __HAL_DMA_DISABLE(&hdma_usart3_rx);
+    } else
+    //! Current memory buffer used is Memory 1
+    {
+      __HAL_DMA_DISABLE(&hdma_usart3_rx);  // disable DMA buffer 1
       // get receive data length, length = set_data_length - remain_length
-      this_time_rx_len = SBUS_RX_BUF_NUM - hdma_usart3_rx.Instance->NDTR;
-      // reset set_data_lenght
-      hdma_usart3_rx.Instance->NDTR = SBUS_RX_BUF_NUM;
-      // set memory buffer 0
-      DMA1_Stream1->CR &= ~(DMA_SxCR_CT);
-      __HAL_DMA_ENABLE(&hdma_usart3_rx);
+      len = SBUS_RX_BUF_NUM - hdma_usart3_rx.Instance->NDTR;
+      hdma_usart3_rx.Instance->NDTR = SBUS_RX_BUF_NUM;  // reset set_data_lenght
+      DMA1_Stream1->CR &= ~(DMA_SxCR_CT);               // set memory buffer 0
+      __HAL_DMA_ENABLE(&hdma_usart3_rx);                // enable DMA buffer 0
 
-      if (this_time_rx_len == RC_FRAME_LENGTH) {
+      if (len == RC_FRAME_LENGTH) {
         sbus_to_rc(sbus_rx_buf[1], remt_ctrl);
-        // detect_hook(DBUS_TOE);  // 记录数据接收时间
         sbus_to_print(sbus_rx_buf[1]);
       }
     }
   }
 }
+
+//? 串口中断已经被定义
+// __weak void USART3_IRQHandler(void) {
+//   /* USART3 global interrupt handler */
+//   HAL_UART_IRQHandler(&huart3);
+// }
 
 void DMA1_Stream1_IRQHandler(void) {
   /* DMA1 stream1 global interrupt handler */

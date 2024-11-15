@@ -9,11 +9,11 @@ extern "C" {
 #endif
 
 typedef struct {
-  uint16_t ecd;
-  int16_t speed_rpm;
-  int16_t given_current;
-  uint8_t temperate;
-  int16_t last_ecd;
+  uint16_t ecd;       // 电机编码器值
+  int16_t speed_rpm;  // 电机转速
+  int16_t current;    // 电机给定电流
+  uint8_t temperate;  // 电机温度
+  int16_t last_ecd;   // 上一次的编码器值
 } motor_measure_t;
 
 void can_init(void);
@@ -59,7 +59,7 @@ typedef enum {
   CAN_YAW_MOTOR_ID = 0x205,  // 0x1FF 5
   CAN_PIT_MOTOR_ID = 0x206,  // 0x1FF 6
 
-  /// 拨弹电机 2006
+  /// 拨弹电机 3508
   CAN_TRIG_MOTOR_ID = 0x207,  // 0x1FF 7
 
 } can_msg_id_e;

@@ -7,7 +7,7 @@ project(${CMAKE_PROJECT_NAME})
 add_library(${CMAKE_PROJECT_NAME} INTERFACE)
 target_link_libraries(${CMAKE_PROJECT_NAME} INTERFACE
     start loop blinky voltage ins referee
-    shoot
+
 )
 
 
@@ -59,11 +59,3 @@ add_library(referee INTERFACE)
 file(GLOB APPS_REFEREE Referee/*.c)
 target_include_directories(referee INTERFACE Referee)
 target_sources(referee INTERFACE ${APPS_REFEREE})
-
-##########################################
-### Shoot Task
-##########################################
-add_library(shoot INTERFACE)
-file(GLOB APPS_SHOOT Shoot/*.c)
-target_include_directories(shoot INTERFACE Shoot)
-target_sources(shoot INTERFACE ${APPS_SHOOT})

@@ -7,7 +7,7 @@ project(${CMAKE_PROJECT_NAME})
 add_library(${CMAKE_PROJECT_NAME} INTERFACE)
 target_link_libraries(${CMAKE_PROJECT_NAME} INTERFACE
     algo bled buzzer laser adc can imu
-    remtctrl refuart
+    remtctrl refuart shoot
 )
 
 
@@ -105,6 +105,15 @@ target_sources(refuart INTERFACE
     ${COMPONENTS_REFUART}
 )
 
+##########################################
+### Shoot Task
+##########################################
+add_library(shoot INTERFACE)
+file(GLOB COMPONENTS_SHOOT Shoot/*.c)
+target_include_directories(shoot INTERFACE Shoot)
+target_sources(shoot INTERFACE
+    ${COMPONENTS_SHOOT}
+)
 
 
 ##########################################

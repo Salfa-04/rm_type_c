@@ -11,7 +11,7 @@ void remtctrl_start(void);
 void remtctrl_restart(uint16_t dma_buf_num);
 
 // remote control data
-static remt_t remt_ctrl = {0};
+static remtctrl_t remt_ctrl = {0};
 
 void remtctrl_init(void) {
   remtctrl_uart_init();
@@ -21,7 +21,7 @@ void remtctrl_init(void) {
   remtctrl_start();
 }
 
-const remt_t *get_remote_control_point(void) { return &remt_ctrl; }
+const remtctrl_t *getp_remtctrl(void) { return &remt_ctrl; }
 void slove_RC_lost(void) { remtctrl_restart(SBUS_RX_BUF_NUM); }
 void slove_data_error(void) { remtctrl_restart(SBUS_RX_BUF_NUM); }
 

@@ -6,12 +6,15 @@
 #include "remtctrl.h"
 #include "user_lib.h"
 
+/** TEMP ****/
+#define GIMBAL_CONTROL_TIME 1
+#define FRIC_OFF 0
+#define FRIC_DOWN 9800
+/** EO TEMP */
+
 // 射击发射开关通道数据
-#define SHOOT_RC_MODE_CHANNEL 1
-// 云台模式使用的开关通道
-
+#define SHOOT_RC_MODE_CHANNEL 1  // rc.s[1]: 左拨杆
 #define SHOOT_CONTROL_TIME GIMBAL_CONTROL_TIME
-
 #define SHOOT_FRIC_PWM_ADD_VALUE 3000.0f
 
 // 射击摩擦轮激光打开 关闭
@@ -29,13 +32,10 @@
 // 电机反馈码盘值范围
 #define HALF_ECD_RANGE 4096
 #define ECD_RANGE 8191
-// 电机rmp 变化成 旋转速度的比例
+// 电机rpm变化成旋转速度的比例
 #define MOTOR_RPM_TO_SPEED 0.00290888208665721596153948461415f
 #define MOTOR_ECD_TO_ANGLE 0.000021305288720633905968306772076277f
-
 #define MOTOR_ECD_TO_ANGLE_3508 0.000040372843796333501319967915790495f
-
-#define FULL_COUNT 18
 
 // 拨弹速度
 // #define TRIGGER_SPEED               10.0f
@@ -52,12 +52,15 @@
 #define TRIGGER_READY_ANGLE_PID_MAX_IOUT 3.14  // 参数怎么确定
 #define TRIGGER_READY_SPEED_PID_MAX_OUT 3.14   // 参数怎么确定
 #define TRIGGER_READY_SPEED_PID_MAX_IOUT 3.14  // 参数怎么确定
+/// 我不知道这个参数怎么确定！！！
 
 #define KEY_OFF_JUGUE_TIME 500
-#define SWITCH_TRIGGER_ON 0
-#define SWITCH_TRIGGER_OFF 1
 
-// 卡单时间 以及反转时间
+/// 微动开关被按下和松开
+#define SWITCH_TRIGGER_ON 1
+#define SWITCH_TRIGGER_OFF 0
+
+// 卡蛋时间 以及 反转时间
 #define BLOCK_TRIGGER_SPEED 1.0f
 #define BLOCK_TIME 700
 #define REVERSE_TIME 500
@@ -125,73 +128,76 @@ extern "C" {
 #endif
 
 typedef enum {
-  SHOOT_STOP = 0,
-  SHOOT_READY_FRIC,    // FRIC摩擦
-  SHOOT_READY_BULLET,  // BULLET弹丸
-  SHOOT_READY,
-  SHOOT_BULLET,
-  SHOOT_DONE = 5,
+  /// 射击状态
+  SHOOT_STOP = 0,      // 射击关闭状态
+  SHOOT_READY_FRIC,    // 准备摩擦轮, 摩擦轮加速
+  SHOOT_READY_BULLET,  // 准备弹药, 自动上弹
+  SHOOT_READY,         // 准备就绪, 等待射击
+  SHOOT_BULLET,        // 射击状态, 发射子弹
+  SHOOT_DONE = 5,      // 一次射击完毕
 
-  SHOOT_BULLET_STOP,  // 卡弹
-  SHOOT_FRIC_STOP,    // 有弹卡在摩擦轮之间
+  /// 卡弹状态
+  SHOOT_BULLET_STOP,  // 弹盘电机被卡弹
+  SHOOT_FRIC_STOP,    // 摩擦轮电机被卡弹
 } shoot_mode_e;
 
 typedef struct {
+  ///! 射击模式
   shoot_mode_e shoot_mode;
-  uint32_t shoot_ready_fric_time;
-  const remtctrl_t *shoot_rc;
-  const motor_measure_t *trig_motor_data;
+  shoot_mode_e last_shoot_mode;
 
-  pid_t trigger_motor_speed_pid;
-  pid_t trigger_motor_angle_pid;
-  fp32 trigger_rpm_speed_set;
-  fp32 rpm_speed;
-  fp32 angle;
-  int16_t given_current;
+  // 摩擦轮准备就绪时间, 用于判断是否卡弹
+  uint32_t shoot_ready_fric_time;
+
+  ///! 遥控器数据
+  const remtctrl_t *shoot_rc;
+
+  ///! 电机数据
+  const motor_measure_t *trig_motor;   // 拨弹盘电机
+  const motor_measure_t *fric1_motor;  // 摩擦轮电机
+  const motor_measure_t *fric2_motor;  // 摩擦轮电机
+
+  ///! 拨弹盘电机
+  fp32 trig_speed_set;
+  pid_t trig_pid_speed;
+  pid_t trig_pid_angle;
+  fp32 trig_speed, trig_angle;
+  int16_t trig_current;  // 拨弹盘电机电流
   int16_t ecd_Sum;
-  fp32 add_angle;
-  fp32 angle_set;
+
+  fp32 add_angle, angle_set;
   int16_t trigger_flag;
   int return_back_flag;
   fp32 last_angle;
-  shoot_mode_e last_shoot_mode;
 
-  // 摩擦轮
-  const motor_measure_t *shoot_fric1_measure;
-  const motor_measure_t *shoot_fric2_measure;
-  ramp_function_source_t fric1_ramp;
-  int16_t fric_current1;
-  int16_t fric_current2;
-  ramp_function_source_t fric2_ramp;
-  pid_t fric1_ramp_pid;
-  pid_t fric2_ramp_pid;
-  fp32 fric1_set_speed;
-  fp32 fric1_speed;
-  fp32 fric2_speed;
+  ///! 摩擦轮, 发射电机
+  fp32 fric_speed_set;
+  int16_t fric1_current, fric2_current;
+  pid_t fric1_ramp_pid, fric2_ramp_pid;
+  fp32 fric1_speed, fric2_speed;
 
-  bool_t press_l;
-  bool_t press_r;
-  bool_t last_press_l;
-  bool_t last_press_r;
+  ///! 键盘按键
+  bool_t press_l, last_press_l;
+  bool_t press_r, last_press_r;
   uint16_t press_l_time;
   uint16_t press_r_time;
   uint16_t rc_s_time;
 
   uint16_t block_time;
   uint16_t reverse_time;
-  bool_t move_flag;
+  // bool_t move_flag;
 
-  bool_t key;        // 二次备弹标志
-  bool_t key_first;  // 一次备弹标志
+  bool_t key;  // 发弹口处微动开关; 1: 按下, 0: 未按下
+
   int key_time;
 
   uint16_t heat_limit;
   uint16_t heat;
-} shoot_control_t;
+} sctrl_t;
 
 // 由于射击和云台使用同一个can的id故也射击任务在云台任务中执行
-extern void shoot_init(void);
-extern int16_t shoot_control_loop(void);
+void shoot_init(void);
+int16_t shoot_control_loop(void);
 
 #ifdef __cplusplus
 }
