@@ -2,7 +2,6 @@
 
 #include "cmsis_os.h"
 #include "type_def.h"
-// #include "detect_task.h"
 
 static CAN_HandleTypeDef hcan1;  // CHASSIS_CAN
 static CAN_HandleTypeDef hcan2;  // GIMBAL_CAN
@@ -43,7 +42,7 @@ void can_init(void) {
  *
  */
 
-static motor_measure_t motor_chassis[8] = {0};
+static motor_measure_t motor_chassis[9] = {0};
 
 static CAN_TxHeaderTypeDef gimbal_tx_message;
 static CAN_TxHeaderTypeDef chassis_tx_message;
@@ -58,7 +57,7 @@ static uint8_t capci_can_send_data[8];
 /// 控制电机电流: 0x205, 0x206, 0x207 (CAN2)
 /// yaw:    6020电机控制电流,   范围  [-30000, 30000]
 /// pitch:  6020电机控制电流,   范围  [-30000, 30000]
-/// trig:   3508电机控制电流,   范围  [-10000, 10000]
+/// trig:   3508电机控制电流,   范围  [-16384, 16384]
 /// rev: 保留
 ///
 /// yaw: 云台yaw轴
@@ -67,7 +66,7 @@ static uint8_t capci_can_send_data[8];
 void can_gimbal_cmd(int16_t yaw, int16_t pitch, int16_t trig) {
   uint32_t send_mail_box = 0;
 
-  gimbal_tx_message.StdId = CAN_GIMBAL_ALL_ID;
+  gimbal_tx_message.StdId = CAN_GIMBAL_BASE;
   gimbal_tx_message.IDE = CAN_ID_STD;
   gimbal_tx_message.RTR = CAN_RTR_DATA;
   gimbal_tx_message.DLC = 0x08;  // len
@@ -86,24 +85,26 @@ void can_gimbal_cmd(int16_t yaw, int16_t pitch, int16_t trig) {
 }
 
 /// 控制电机电流: 0x201, 0x202, 0x203, 0x204 (CAN2)
-/// fric1:  3508电机控制电流,   范围  [-16384, 16384]
-/// fric2:  3508电机控制电流,   范围  [-16384, 16384]
-/// rev1: 保留
-/// rev2: 保留
+/// fric_main:  3508电机控制电流,   范围  [-16384, 16384]
+/// fric_sub:   3508电机控制电流,   范围  [-16384, 16384]
 ///
 /// fric: 发射电机
-void can_fric_cmd(int16_t fric1, int16_t fric2) {
+///! 电流已反转
+void can_fric_cmd(int16_t fric_main, int16_t fric_sub) {
   uint32_t send_mail_box = 0;
 
-  fric_tx_message.StdId = CAN_SHOOT_ALL_ID;
+  ///! 电机方向相反
+  fric_sub = -fric_sub;
+
+  fric_tx_message.StdId = CAN_SHOOT_BASE;
   fric_tx_message.IDE = CAN_ID_STD;
   fric_tx_message.RTR = CAN_RTR_DATA;
   fric_tx_message.DLC = 0x08;  // len
 
-  fric_can_send_data[0] = (fric1 >> 8);
-  fric_can_send_data[1] = fric1;  /// ID: 1
-  fric_can_send_data[2] = (fric2 >> 8);
-  fric_can_send_data[3] = fric2;  /// ID: 2
+  fric_can_send_data[0] = (fric_main >> 8);
+  fric_can_send_data[1] = fric_main;  /// ID: 1
+  fric_can_send_data[2] = (fric_sub >> 8);
+  fric_can_send_data[3] = fric_sub;  /// ID: 2
   fric_can_send_data[4] = 0;
   fric_can_send_data[5] = 0;
   fric_can_send_data[6] = 0;
@@ -123,7 +124,7 @@ void can_fric_cmd(int16_t fric1, int16_t fric2) {
 void can_chassis_cmd(int16_t mot1, int16_t mot2, int16_t mot3, int16_t mot4) {
   uint32_t send_mail_box = 0;
 
-  chassis_tx_message.StdId = CAN_CHASSIS_ALL_ID;
+  chassis_tx_message.StdId = CAN_CHASSIS_BASE;
   chassis_tx_message.IDE = CAN_ID_STD;
   chassis_tx_message.RTR = CAN_RTR_DATA;
   chassis_tx_message.DLC = 0x08;  // len
@@ -147,7 +148,7 @@ void can_chassis_cmd(int16_t mot1, int16_t mot2, int16_t mot3, int16_t mot4) {
 void can_capci_cmd(bool_t start, bool_t restart) {
   uint32_t send_mail_box = 0;
 
-  capci_tx_message.StdId = CAN_CAPCI_ALL_ID;
+  capci_tx_message.StdId = CAN_CAPCI_BASE;
   capci_tx_message.IDE = CAN_ID_STD;
   capci_tx_message.RTR = CAN_RTR_DATA;
   capci_tx_message.DLC = 0x08;
@@ -200,7 +201,7 @@ static void can_peri_init(void) {
   hcan1.Init.TimeTriggeredMode = DISABLE;
   hcan1.Init.AutoBusOff = DISABLE;
   hcan1.Init.AutoWakeUp = DISABLE;
-  hcan1.Init.AutoRetransmission = DISABLE;
+  hcan1.Init.AutoRetransmission = ENABLE;
   hcan1.Init.ReceiveFifoLocked = DISABLE;
   hcan1.Init.TransmitFifoPriority = DISABLE;
   if (HAL_CAN_Init(&hcan1) != HAL_OK) {
@@ -216,7 +217,7 @@ static void can_peri_init(void) {
   hcan2.Init.TimeTriggeredMode = DISABLE;
   hcan2.Init.AutoBusOff = DISABLE;
   hcan2.Init.AutoWakeUp = DISABLE;
-  hcan2.Init.AutoRetransmission = DISABLE;
+  hcan2.Init.AutoRetransmission = ENABLE;
   hcan2.Init.ReceiveFifoLocked = DISABLE;
   hcan2.Init.TransmitFifoPriority = DISABLE;
   if (HAL_CAN_Init(&hcan2) != HAL_OK) {
@@ -224,10 +225,10 @@ static void can_peri_init(void) {
   }
 
   /* CAN1 interrupt Init */
-  HAL_NVIC_SetPriority(CAN1_RX0_IRQn, 4, 0);
+  HAL_NVIC_SetPriority(CAN1_RX0_IRQn, 2, 0);
   HAL_NVIC_EnableIRQ(CAN1_RX0_IRQn);
   /* CAN2 interrupt Init */
-  HAL_NVIC_SetPriority(CAN2_RX0_IRQn, 4, 0);
+  HAL_NVIC_SetPriority(CAN2_RX0_IRQn, 2, 0);
   HAL_NVIC_EnableIRQ(CAN2_RX0_IRQn);
 }
 
@@ -328,9 +329,8 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
 
       {  /// 底盘电机
         static uint8_t id = 0;
-        id = rx_header.StdId - CAN_3508_M1_ID;
+        id = rx_header.StdId - CAN_ADDR_BASE;
         GET_MOT_MEASURE(&motor_chassis[id], rx_data);
-        // detect_hook(CHASSIS_MOTOR1_TOE + id);
       } break;
 
       default:
@@ -344,23 +344,23 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
 
       {  /// 云台电机
         static uint8_t id = 0;
-        id = rx_header.StdId - CAN_3508_M1_ID;
+        id = rx_header.StdId - CAN_ADDR_BASE;
         GET_MOT_MEASURE(&motor_chassis[id], rx_data);
-        // detect_hook(CHASSIS_MOTOR1_TOE + id);
       } break;
 
-      case CAN_FRIC_M1_ID:
-      case CAN_FRIC_M2_ID:
+      case CAN_FRIC_MAIN_ID:
+      case CAN_FRIC_SUB_ID:
 
       {  /// 发射电机
         static uint8_t id = 0;
-        id = rx_header.StdId - CAN_3508_M1_ID;
+        id = rx_header.StdId - CAN_ADDR_BASE;
         GET_MOT_MEASURE(&motor_chassis[id + 7], rx_data);
-        // detect_hook(CHASSIS_MOTOR1_TOE + id);
+        if (rx_header.StdId == CAN_FRIC_SUB_ID) {  /// 电机反转
+          motor_chassis[8].ecd = 8191 - motor_chassis[8].ecd;
+          motor_chassis[8].speed_rpm = -motor_chassis[8].speed_rpm;
+          motor_chassis[8].current = -motor_chassis[8].current;
+        }
       } break;
-
-      default:
-        break;
     }
   }
 }

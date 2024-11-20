@@ -29,7 +29,7 @@ void remtctrl_uart_init(void) {
   }
 
   /* USART3_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(USART3_IRQn, 4, 0);
+  HAL_NVIC_SetPriority(USART3_IRQn, 2, 0);
   HAL_NVIC_EnableIRQ(USART3_IRQn);
 }
 
@@ -71,7 +71,7 @@ void remtctrl_dma_init(void) {
   __HAL_LINKDMA(&huart3, hdmarx, hdma_usart3_rx);
 
   /* DMA1_Stream1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream1_IRQn, 3, 0);
+  HAL_NVIC_SetPriority(DMA1_Stream1_IRQn, 1, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream1_IRQn);
 }
 
@@ -97,11 +97,6 @@ void remtctrl_start(void) {
   SET_BIT(hdma_usart3_rx.Instance->CR, DMA_SxCR_DBM);
   __HAL_DMA_ENABLE(&hdma_usart3_rx);
 }
-
-// void remtctrl_stop(void) {
-//   /* disable remote control */
-//   __HAL_UART_DISABLE(&huart3);
-// }
 
 void remtctrl_restart(uint16_t dma_buf_num) {
   __HAL_UART_DISABLE(&huart3);
@@ -218,7 +213,7 @@ void USART3_IRQHandler(void) {
   }
 }
 
-//? 串口中断已经被定义
+//? 串口中断服务函数已经被定义
 // __weak void USART3_IRQHandler(void) {
 //   /* USART3 global interrupt handler */
 //   HAL_UART_IRQHandler(&huart3);

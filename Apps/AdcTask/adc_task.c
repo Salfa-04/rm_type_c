@@ -1,27 +1,35 @@
-#include "voltage_task.h"
+#include "adc_task.h"
 
 #include "adc.h"
 #include "cmsis_os.h"
+#include "freertos.h"
 
 #define VOLTAGE_DROP 0.00f
 
 static fp32 calc_battery_percentage(float voltage);
-static fp32 battery_voltage, electricity_percentage;
+static fp32 battery_voltage = 0;
+static fp32 electricity_percentage = 0;
+static fp32 mcu_temperature = 0;
+static uint8_t hardware_version = 0;
 
-void voltage_task(void const* args) {
+void adc_task(void const* args) {
   (void)args;
 
+  hardware_version = adc_get_version();
+
   vTaskDelay(1000);
-  adc_update_vref();
 
   for (;;) {
-    battery_voltage = get_battery_voltage() + VOLTAGE_DROP;
+    battery_voltage = adc_get_voltage() + VOLTAGE_DROP;
     electricity_percentage = calc_battery_percentage(battery_voltage);
+    mcu_temperature = adc_get_temprate();
 
-    vTaskDelay(100);
+    vTaskDelay(300);
   }
 }
 
+fp32 get_mcu_temperature(void) { return mcu_temperature; }
+uint8_t get_hardware_version(void) { return hardware_version; }
 uint16_t get_battery_percentage(void) {
   return (uint16_t)(electricity_percentage * 100.0f);
 }

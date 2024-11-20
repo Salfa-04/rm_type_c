@@ -3,33 +3,25 @@
 
 #include "type_def.h"
 
+/// kp: 比例系数
+/// ki: 积分系数
+/// kd: 微分系数
+/// ks: 步进系数
+typedef struct PID {
+  fp32 kp, ki, kd, ks;
+  fp32 error, lastError;
+  fp32 integral, maxIntegral;
+  fp32 output, maxOutput;
+  fp32 step_target, target;
+} pid_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-enum PID_MODE { PID_POSITION = 0, PID_DELTA };
-
-typedef struct {
-  uint8_t mode;
-
-  fp32 Kp, Ki, Kd;  // PID 三参数
-  fp32 max_out;     // 最大输出
-  fp32 max_iout;    // 最大积分输出
-  fp32 set, fdb, out, Pout, Iout, Dout;
-  fp32 Dbuf[3];   // 微分项 0最新 1上一次 2上上次
-  fp32 error[3];  // 误差项 0最新 1上一次 2上上次
-} pid_t;
-
-//   pid: PID结构数据指针
-//   mode: PID_POSITION:普通PID; PID_DELTA: 差分PID
-//   PID: 0: kp, 1: ki, 2:kd
-//   max_out: pid最大输出
-//   max_iout: pid最大积分输出
-void PID_init(pid_t *pid, uint8_t mode, const fp32 PID[3], fp32 max_out,
-              fp32 max_iout);
-
-fp32 PID_calc(pid_t *pid, fp32 ref, fp32 set);
-void PID_clear(pid_t *pid);
+void pid_update(pid_t *pid, fp32 feedback);
+void pid_init(pid_t *pid, fp32 p, fp32 i, fp32 d, fp32 s, fp32 mI, fp32 mO);
+void pid_clear(pid_t *pid);
 
 #ifdef __cplusplus
 }

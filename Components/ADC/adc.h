@@ -10,9 +10,9 @@ extern "C" {
 
 void adc_init(void);
 void adc_update_vref(void);
-fp32 get_temprate(void);
-fp32 get_battery_voltage(void);
-uint8_t get_hardware_version(void);
+fp32 adc_get_temprate(void);
+fp32 adc_get_voltage(void);
+uint8_t adc_get_version(void);
 
 #ifdef __cplusplus
 }

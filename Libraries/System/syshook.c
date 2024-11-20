@@ -1,5 +1,4 @@
 #include "cdc.h"
-#include "stm32f4xx_hal.h"
 #include "type_def.h"
 
 void SystemClock_Config(void);
@@ -29,12 +28,16 @@ void assert_failed(uint8_t *file, uint32_t line) {
 
 #define __va(x) __builtin_va_##x
 extern USBD_HandleTypeDef hUsbDeviceFS;
+extern uint8_t UserRxBufferFS[];
+extern uint32_t UserRxBufferLen;
 
+/// ret: 0: Ok, ~0: Err
 bool_t uprint(uint8_t *data, uint8_t len) {
   /* Redirecting Output: Ok:0, Err:~0 */
   return CDC_Transmit_FS(data, len);
 }
 
+/// ret: 0: Ok, ~0: Err
 bool_t uprintf(const char *format, ...) {
   if (((USBD_CDC_HandleTypeDef *)hUsbDeviceFS.pClassData)->TxState) return 1;
 
@@ -46,6 +49,14 @@ bool_t uprintf(const char *format, ...) {
   __va(end)(arg);
 
   return uprint(buffer, len);
+}
+
+uint32_t usb_bufget(uint8_t **buf) {
+  uint32_t len = UserRxBufferLen;
+  *buf = UserRxBufferFS;
+  UserRxBufferLen = 0;
+
+  return len;
 }
 
 /************************** System Clock Config  **************************/

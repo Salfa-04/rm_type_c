@@ -4,6 +4,8 @@ static TIM_HandleTypeDef htim4;
 static void buzzer_tim_init(void);
 static void buzzer_gpio_init(void);
 
+/// psc: 预分频系数, pwm: 占空比
+/// psc: [0, 65535], pwm: [0, 65535]
 void buzzer_on(uint16_t psc, uint16_t pwm) {
   __HAL_TIM_PRESCALER(&htim4, psc);
   __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_3, pwm);

@@ -14,8 +14,6 @@ uint32_t RGB_flow_color[RGB_FLOW_COLOR_LENGHT + 1] = {
 void blinky_task(void const *args) {
   (void)args;
 
-  bled_init();
-
   uint16_t i, j;
   fp32 delta_alpha, delta_red, delta_green, delta_blue;
   fp32 alpha, red, green, blue;

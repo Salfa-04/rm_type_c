@@ -1,6 +1,6 @@
 #include "bmi088.h"
-#include "cmsis_os.h"
 #include "imu.h"
+#include "stm32f4xx_hal.h"
 
 void imu_bmi088_read(uint8_t tx_data, uint8_t* rx_data);
 
@@ -55,5 +55,5 @@ void bmi088_gyro_read_multi(uint8_t reg, uint8_t* data, uint8_t len) {
   HAL_GPIO_WritePin(CS_Gyro_GPIO_Port, CS_Gyro_Pin, GPIO_PIN_SET);
 }
 
-void bmi088_delay_long(void) { vTaskDelay(80); }
-void bmi088_delay_short(void) { vTaskDelay(1); }
+void bmi088_delay_long(void) { HAL_Delay(80); }
+void bmi088_delay_short(void) { HAL_Delay(1); }

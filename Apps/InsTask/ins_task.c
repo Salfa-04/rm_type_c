@@ -1,7 +1,7 @@
 #include "ins_task.h"
 
 #include "AHRS.h"
-#include "adc.h"
+#include "adc_task.h"
 #include "freertos.h"
 #include "imu.h"
 #include "pid.h"
@@ -60,7 +60,7 @@ static const fp32 imu_temp_PID[3] = {
     TEMPERATURE_PID_KD,
 };
 
-static pid_t imu_temp_pid;
+static pid_t imu_temp_pid = {0};
 // tast run time , unit s.任务运行的时间 单位 s
 static const float timing_time = 0.001f;
 
@@ -94,12 +94,14 @@ void ins_task(void const *args) {
   imu_temp_PID_int[1] = imu_temp_PID[1];
   imu_temp_PID_int[2] = imu_temp_PID[2];
 
-  while (imu_init()) osDelay(300);
   bmi088_read_all(&bmi088_data);
   imu_cali_slove(INS_gyro, INS_accel, &bmi088_data);
 
-  PID_init(&imu_temp_pid, PID_POSITION, imu_temp_PID_int /*imu_temp_PID*/,
-           TEMPERATURE_PID_MAX_OUT, TEMPERATURE_PID_MAX_IOUT);
+  /// 初始化 IMU 温度控制 PID, 有关于陀螺仪零飘
+  pid_init(&imu_temp_pid, TEMPERATURE_PID_KP, TEMPERATURE_PID_KI,
+           TEMPERATURE_PID_KD, 0, TEMPERATURE_PID_MAX_OUT,
+           TEMPERATURE_PID_MAX_IOUT);
+
   AHRS_init(INS_quat, INS_accel, INS_mag);
 
   // 滤波初始化
@@ -181,27 +183,25 @@ static void imu_cali_slove(fp32 gyro[3], fp32 accel[3], bmi088_t *bmi088) {
   }
 }
 
-static void imu_temp_control(fp32 temp) {
-  static fp32 temperature = 10.f;
-  temperature += get_temprate();
-
-  if (temperature > GYRO_CONST_MAX_TEMP) {
-    temperature = GYRO_CONST_MAX_TEMP;
-  }
-
-  uint16_t tempPWM;
+static void imu_temp_control(fp32 imu_temperature) {
+  static fp32 temperature = 0;
   static uint8_t temp_constant_time = 0;
+
+  temperature = get_mcu_temperature() + 10.f;
+  if (temperature > GYRO_CONST_MAX_TEMP)  // 限制最大温度
+    temperature = GYRO_CONST_MAX_TEMP;
+  imu_temp_pid.target = temperature;
+
   if (first_temperate) {
-    PID_calc(&imu_temp_pid, temp, temperature);
-    if (imu_temp_pid.out < 0.0f) imu_temp_pid.out = 0.0f;
-    tempPWM = (uint16_t)imu_temp_pid.out;
-    IMU_temp_PWM(tempPWM);
+    pid_update(&imu_temp_pid, imu_temperature);
+    if (imu_temp_pid.output < 0.0f) imu_temp_pid.output = 0.0f;
+    IMU_temp_PWM((uint16_t)imu_temp_pid.output);
   } else {
-    if (temp > temperature) {
+    if (imu_temperature > temperature) {
       // 达到设置温度，将积分项设置为一半最大功率，加速收敛
       if (++temp_constant_time > 200) {
         first_temperate = 1;
-        imu_temp_pid.Iout = MPU6500_TEMP_PWM_MAX / 2.0f;
+        imu_temp_pid.integral = MPU6500_TEMP_PWM_MAX / 2.0f;
       }
     }
 

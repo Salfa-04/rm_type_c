@@ -31,10 +31,11 @@ void sbus_to_print(uint8_t *sbus) {
   static uint8_t i = 0;
   usart_tx_buf[0] = 0xA6;
   memcpy(usart_tx_buf + 1, sbus, 18);
+
   for (i = 0, usart_tx_buf[19] = 0; i < 19; i++)
     usart_tx_buf[19] += usart_tx_buf[i];
 
-  bool_t warn;
+  bool_t warn = -1;
 
   // usart1_tx_dma_enable(usart_tx_buf, 20);
   //   Error_Handler();

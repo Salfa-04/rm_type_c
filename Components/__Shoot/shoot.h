@@ -29,7 +29,7 @@
 #define RC_S_LONG_TIME 3000
 // 摩擦轮高速 加速 时间
 #define UP_ADD_TIME 80
-// 电机反馈码盘值范围
+// 电机反馈编码值范围
 #define HALF_ECD_RANGE 4096
 #define ECD_RANGE 8191
 // 电机rpm变化成旋转速度的比例
@@ -69,39 +69,11 @@
 #define PI_FOUR 0.78539816339744830961566084581988f
 #define PI_TEN 1.2f  // 0.4186f//0.314f
 
-// 拨弹轮电机速度环PID
-#define TRIG_SPEED_KP 30.0f  // 20.0f//30.0f
-#define TRIG_SPEED_KI 4.0f   // 3.1f//1.20f
-#define TRIG_SPEED_KD 1.0f   // 0.1f
-
-#define TRIGGER_SPEED_PID_MAX_KP 16000.0f
-#define TRIGGER_SPEED_PID_MAX_KI 2000.0f
-
-// 拨弹轮电机角度环PID
-#define TRIG_ANGLE_KP 2500.0f
-#define TRIG_ANGLE_KI 16.0f  // 15.0f//0.0f
-#define TRIG_ANGLE_KD 9.0f   // 10.0f
-
-#define TRIGGER_ANGLE_PID_MAX_KP 80000.0f  // 3250.0f
-#define TRIGGER_ANGLE_PID_MAX_KI 10000.0f  // 0.0f
-
 // #define TRIGGER_BULLET_PID_MAX_OUT  10000.0f
 // #define TRIGGER_BULLET_PID_MAX_IOUT 9000.0f
 
 // #define TRIGGER_READY_PID_MAX_OUT   10000.0f
 // #define TRIGGER_READY_PID_MAX_IOUT  7000.0f
-
-// 摩擦轮电机PID
-#define FRIC1_KP 20.0f  // 16.0f//20.0f//15.0f
-#define FRIC1_KI 1.0f   // 0.5f//0.8f//0.95f//0.80f//1.2f//0.6f
-#define FRIC1_KD 0.0f   // 100.0f//100.0f//0.01f
-
-#define FRIC2_KP 20.0f  // 16.0f//20.0f//15.0f
-#define FRIC2_KI 1.0f   // 0.5f//0.8f//1.005f//0.7f//1.2f//0.6f
-#define FRIC2_KD 0.0f   // 100.0f//100.0f	//0.01f
-
-#define FRIC12_PID_MAX_OUT 16800.0f
-#define FRIC12_PID_MAX_IOUT 16000.0f
 
 #define SHOOT_HEAT_REMAIN_VALUE 100  // 80
 
@@ -157,27 +129,26 @@ typedef struct {
   const remtctrl_t *shoot_rc;
 
   ///! 电机数据
-  const motor_measure_t *trig_motor;   // 拨弹盘电机
-  const motor_measure_t *fric1_motor;  // 摩擦轮电机
-  const motor_measure_t *fric2_motor;  // 摩擦轮电机
+  const motor_measure_t *trig_motor;       // 拨弹盘电机
+  const motor_measure_t *fric_motor_main;  // 摩擦轮电机
+  const motor_measure_t *fric_motor_sub;   // 摩擦轮电机
 
   ///! 拨弹盘电机
   fp32 trig_speed_set;
-  pid_t trig_pid_speed;
-  pid_t trig_pid_angle;
   fp32 trig_speed, trig_angle;
-  int16_t trig_current;  // 拨弹盘电机电流
-  int16_t ecd_Sum;
+  int16_t trig_current;   // 拨弹盘电机电流
+  int16_t trig_laps_sum;  // 拨弹盘电机圈数
 
   fp32 add_angle, angle_set;
   int16_t trigger_flag;
-  int return_back_flag;  // 退弹标志
+
+  // 退弹计数器, 当该值大于某一值时被认为需要退弹
+  int return_back_flag;
   fp32 last_angle;
 
   ///! 摩擦轮, 发射电机
   fp32 fric_speed_set;
   int16_t fric1_current, fric2_current;
-  pid_t fric1_ramp_pid, fric2_ramp_pid;
   fp32 fric1_speed, fric2_speed;
 
   ///! 键盘按键
@@ -187,7 +158,7 @@ typedef struct {
   uint16_t block_time;
 
   // 发弹口处微动开关; 1: 按下, 0: 未按下
-  bool_t key;
+  bool_t trig_button_hold;
 
   int key_time;
 

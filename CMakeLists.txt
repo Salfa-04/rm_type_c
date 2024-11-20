@@ -14,8 +14,8 @@ set(CMAKE_PROJECT_URL               "api.salfa.cc")
 
 set(PRINTF_FLOAT_SUPPORT            ON)    # BOOL Y/N ON/OFF
 # set(PRINTF_FLOAT_SUPPORT            OFF)    # BOOL Y/N ON/OFF
-# set(CMAKE_BUILD_TYPE                Debug)  # Release or Debug
-set(CMAKE_BUILD_TYPE                Release)  # Release or Debug
+set(CMAKE_BUILD_TYPE                Debug)  # Release or Debug
+# set(CMAKE_BUILD_TYPE                Release)  # Release or Debug
 
 set(CMAKE_C_STANDARD                11)     # Min: 11..
 set(CMAKE_CXX_STANDARD              11)     # Min: 11..
@@ -92,9 +92,9 @@ message("Float Printf Support: "    ${PRINTF_FLOAT_SUPPORT})
 set(CMAKE_C_FLAGS_DEBUG             "-O0 -g3")
 set(CMAKE_ASM_FLAGS_DEBUG           "-O0 -g3")
 set(CMAKE_CXX_FLAGS_DEBUG           "-O0 -g3")
-set(CMAKE_C_FLAGS_RELEASE           "-Ofast -s")
-set(CMAKE_ASM_FLAGS_RELEASE         "-Ofast -s")
-set(CMAKE_CXX_FLAGS_RELEASE         "-Ofast -s")
+set(CMAKE_C_FLAGS_RELEASE           "-O0 -s")
+set(CMAKE_ASM_FLAGS_RELEASE         "-O0 -s")
+set(CMAKE_CXX_FLAGS_RELEASE         "-O0 -s")
 
 # Set the project information
 unset(CMAKE_EXECUTABLE_SUFFIX)
@@ -105,7 +105,7 @@ set(CMAKE_GENERATOR Ninja CACHE INTERNAL "Name of generator.")
 # Set the target flags
 set(TARGET_FLAGS            "-mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard")
 set(CMAKE_C_FLAGS           "${TARGET_FLAGS} -Wall -Wextra -Wpedantic")
-set(CMAKE_C_FLAGS           "${CMAKE_C_FLAGS} -fdata-sections -ffunction-sections")
+set(CMAKE_C_FLAGS           "${CMAKE_C_FLAGS} -fdata-sections -ffunction-sections -flto")
 set(CMAKE_ASM_FLAGS         "${CMAKE_C_FLAGS} -x assembler-with-cpp -MMD -MP")
 set(CMAKE_CXX_FLAGS         "${CMAKE_C_FLAGS} -fno-rtti -fno-exceptions -fno-threadsafe-statics")
 set(CMAKE_C_LINK_FLAGS      "${CMAKE_C_LINK_FLAGS} ${TARGET_FLAGS} --specs=nano.specs")

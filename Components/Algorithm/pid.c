@@ -1,87 +1,57 @@
 #include "pid.h"
 
-#include "stm32f4xx_hal.h"
-
-#define LimitMax(input, max)   \
-  {                            \
-    if (input > max) {         \
-      input = max;             \
-    } else if (input < -max) { \
-      input = -max;            \
-    }                          \
-  }
-
-void PID_init(pid_t *pid, uint8_t mode, const fp32 PID[3], fp32 max_out,
-              fp32 max_iout) {
-  if (pid == NULL || PID == NULL) {
-    return;
-  }
-
-  pid->mode = mode;
-  pid->Kp = PID[0];
-  pid->Ki = PID[1];
-  pid->Kd = PID[2];
-  pid->max_out = max_out;
-  pid->max_iout = max_iout;
-  pid->Dbuf[0] = pid->Dbuf[1] = pid->Dbuf[2] = 0.0f;
-  pid->error[0] = pid->error[1] = pid->error[2] = pid->Pout = pid->Iout =
-      pid->Dout = pid->out = 0.0f;
+/// PID 初始化
+/// pid: PID 结构体指针
+/// p: 比例系数, i: 积分系数, d: 微分系数, s: 步进系数
+/// mI: 最大积分, mO: 最大输出
+///
+/// s 为 0 时, 不使用步进模式; s 不为 0 时, 使用步进模式
+///
+/// 步进模式下, 用户设置 pid->target,
+/// 内部会逐步逼近 target, 逼近速度为 ks
+///
+void pid_init(pid_t *pid, fp32 p, fp32 i, fp32 d, fp32 s, fp32 mI, fp32 mO) {
+  pid->kp = p, pid->ki = i, pid->kd = d, pid->ks = s;
+  pid->maxIntegral = mI, pid->maxOutput = mO;
+  pid->step_target = pid->target = 0;
 }
 
-/**
- * @brief          pid calculate
- * @param[out]     pid: PID struct data point
- * @param[in]      ref: feedback data
- * @param[in]      set: set point
- * @retval         pid out
- */
-/**
- * @brief          pid计算
- * @param[out]     pid: PID结构数据指针
- * @param[in]      ref: 反馈数据
- * @param[in]      set: 设定值
- * @retval         pid输出
- */
-fp32 PID_calc(pid_t *pid, fp32 ref, fp32 set) {
-  if (pid == NULL) {
-    return 0.0f;
+void pid_update(pid_t *pid, fp32 feedback) {
+  // update step target
+  if (pid->ks) {
+    if (pid->step_target > pid->target) {
+      pid->step_target -= pid->ks;
+      if (pid->step_target < pid->target) pid->step_target = pid->target;
+    } else if (pid->step_target < pid->target) {
+      pid->step_target += pid->ks;
+      if (pid->step_target > pid->target) pid->step_target = pid->target;
+    }
   }
 
-  pid->error[2] = pid->error[1];
-  pid->error[1] = pid->error[0];
-  pid->set = set;
-  pid->fdb = ref;
-  pid->error[0] = set - ref;
-  if (pid->mode == PID_POSITION) {
-    pid->Pout = pid->Kp * pid->error[0];
-    pid->Iout += pid->Ki * pid->error[0];
-    pid->Dbuf[2] = pid->Dbuf[1];
-    pid->Dbuf[1] = pid->Dbuf[0];
-    pid->Dbuf[0] = (pid->error[0] - pid->error[1]);
-    pid->Dout = pid->Kd * pid->Dbuf[0];
-    LimitMax(pid->Iout, pid->max_iout);
-    pid->out = pid->Pout + pid->Iout + pid->Dout;
-    LimitMax(pid->out, pid->max_out);
-  } else if (pid->mode == PID_DELTA) {
-    pid->Pout = pid->Kp * (pid->error[0] - pid->error[1]);
-    pid->Iout = pid->Ki * pid->error[0];
-    pid->Dbuf[2] = pid->Dbuf[1];
-    pid->Dbuf[1] = pid->Dbuf[0];
-    pid->Dbuf[0] = (pid->error[0] - 2.0f * pid->error[1] + pid->error[2]);
-    pid->Dout = pid->Kd * pid->Dbuf[0];
-    pid->out += pid->Pout + pid->Iout + pid->Dout;
-    LimitMax(pid->out, pid->max_out);
-  }
-  return pid->out;
+  // update error and last error
+  pid->lastError = pid->error;
+  pid->error = pid->step_target - feedback;
+
+  // update p, i, d outputs
+  fp32 p_out = pid->error * pid->kp;
+  fp32 i_out = pid->error * pid->ki;
+  fp32 d_out = (pid->error - pid->lastError) * pid->kd;
+
+  pid->integral += i_out;
+  if (pid->integral > pid->maxIntegral)
+    pid->integral = pid->maxIntegral;
+  else if (pid->integral < -(pid->maxIntegral))
+    pid->integral = -(pid->maxIntegral);
+
+  pid->output = p_out + d_out + pid->integral;
+  if (pid->output > pid->maxOutput)
+    pid->output = pid->maxOutput;
+  else if (pid->output < -(pid->maxOutput))
+    pid->output = -(pid->maxOutput);
 }
 
-void PID_clear(pid_t *pid) {
-  if (pid == NULL) {
-    return;
-  }
-
-  pid->error[0] = pid->error[1] = pid->error[2] = 0.0f;
-  pid->Dbuf[0] = pid->Dbuf[1] = pid->Dbuf[2] = 0.0f;
-  pid->out = pid->Pout = pid->Iout = pid->Dout = 0.0f;
-  pid->fdb = pid->set = 0.0f;
+void pid_clear(pid_t *pid) {
+  pid->error = pid->lastError = 0;
+  pid->integral = pid->output = 0;
+  pid->step_target = pid->target = 0;
 }

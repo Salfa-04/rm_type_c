@@ -16,6 +16,7 @@ extern "C" {
 void Error_Handler(void);
 bool_t uprint(uint8_t *data, uint8_t len);
 bool_t uprintf(const char *format, ...);
+uint32_t usb_bufget(uint8_t **buf);
 
 #ifdef __cplusplus
 }

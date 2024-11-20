@@ -1,21 +1,53 @@
 #include "loop_task.h"
 
+#include <stdint.h>
+
+#include "can.h"
+#include "can_task.h"
 #include "freertos.h"
+#include "pid.h"
 #include "remtctrl.h"
 #include "type_def.h"
+
+void pid_get(pid_t **pid_left, pid_t **pid_right);
 
 void loop_task(void const *args) {
   (void)args;
 
-  remtctrl_t *remote = (remtctrl_t *)getp_remtctrl();
+  const remtctrl_t *remote = getp_remtctrl();
+  const motor_measure_t *frig_left = getp_fric_motor(0);
+  const motor_measure_t *frig_right = getp_fric_motor(1);
+
+  uint32_t len = 0;
+  uint8_t *buf = NULL;
+  pid_t *pid_left = NULL;
+  pid_t *pid_right = NULL;
+
+  pid_get(&pid_left, &pid_right);
 
   /* Infinite loop */
   for (;;) {
-    uprintf("ch1: %d, ch2: %d, ch3: %d, ch4: %d, ch5: %d, s1: %d, s2: %d\r\n",
-            remote->rc.ch[0], remote->rc.ch[1], remote->rc.ch[2],
-            remote->rc.ch[3], remote->rc.ch[4], remote->rc.s[0],
-            remote->rc.s[1]);
+    len = usb_bufget(&buf);
+    if (len == 4) {
+      pid_left->kp = pid_right->kp = (fp32)buf[0] / 10;
+      pid_left->ki = pid_right->ki = (fp32)buf[1] / 10;
+      pid_left->kd = pid_right->kd = (fp32)buf[2] / 10;
+      pid_left->ks = pid_right->ks = (fp32)buf[3] * 10;
+    }
 
-    vTaskDelay(100);
+    if (remote->rc.ch[0] > 440) {  // > 330
+      can_fric_forward();
+    } else if (remote->rc.ch[0] < -440) {  // < -330
+      can_fric_reverse();
+    } else {
+      can_fric_off();
+    }
+
+    uprintf(
+        "left: %d;;;left_v: %d, right_v:%d;;; P: %f, I: %f, D: %f, S: %f\r\n",
+        remote->rc.ch[0], frig_left->speed_rpm, frig_right->speed_rpm,
+        pid_left->kp, pid_left->ki, pid_left->kd, pid_left->ks);
+
+    vTaskDelay(30);
   }
 }

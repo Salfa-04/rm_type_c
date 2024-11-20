@@ -6,8 +6,8 @@ set(CMAKE_PROJECT_NAME              applications)
 project(${CMAKE_PROJECT_NAME})
 add_library(${CMAKE_PROJECT_NAME} INTERFACE)
 target_link_libraries(${CMAKE_PROJECT_NAME} INTERFACE
-    start loop blinky voltage ins referee
-
+    start loop blinky ins referee
+    adc_task can_task
 )
 
 
@@ -37,12 +37,20 @@ target_include_directories(blinky INTERFACE Blinky)
 target_sources(blinky INTERFACE ${APPS_BLINKY})
 
 ##########################################
-### Battery Voltage Task
+### ADC Task
 ##########################################
-add_library(voltage INTERFACE)
-file(GLOB APPS_VOLTAGE Voltage/*.c)
-target_include_directories(voltage INTERFACE Voltage)
-target_sources(voltage INTERFACE ${APPS_VOLTAGE})
+add_library(adc_task INTERFACE)
+file(GLOB APPS_ADC AdcTask/*.c)
+target_include_directories(adc_task INTERFACE AdcTask)
+target_sources(adc_task INTERFACE ${APPS_ADC})
+
+##########################################
+### CAN Task
+##########################################
+add_library(can_task INTERFACE)
+file(GLOB APPS_CAN CanTask/*.c)
+target_include_directories(can_task INTERFACE CanTask)
+target_sources(can_task INTERFACE ${APPS_CAN})
 
 ##########################################
 ### INS Task (imu)

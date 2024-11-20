@@ -9,11 +9,12 @@ extern "C" {
 
 void freertos_init(void);
 
-extern osThreadId blinkyTask;
 extern osThreadId loopTask;
-extern osThreadId deviceTask;
+extern osThreadId adcTask;
+extern osThreadId blinkyTask;
 extern osThreadId insTask;
 extern osThreadId detectTask;
+extern osThreadId refereeTask;
 
 #ifdef __cplusplus
 }
