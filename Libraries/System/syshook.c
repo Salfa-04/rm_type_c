@@ -51,12 +51,11 @@ bool_t uprintf(const char *format, ...) {
   return uprint(buffer, len);
 }
 
-uint32_t usb_bufget(uint8_t **buf) {
-  uint32_t len = UserRxBufferLen;
-  *buf = UserRxBufferFS;
+uint8_t *usb_bufget(uint32_t *len) {
+  *len = UserRxBufferLen;
   UserRxBufferLen = 0;
 
-  return len;
+  return UserRxBufferFS;
 }
 
 /************************** System Clock Config  **************************/

@@ -18,6 +18,9 @@ osThreadId detectTask;
 osThreadId refereeTask;
 
 void freertos_init(void) {
+  /* disable interrupts */
+  __set_PRIMASK(1);
+
   /* add mutexes, ... */
 
   /* add semaphores, ... */

@@ -19,10 +19,10 @@ void bmi088_gyro_read_multi(uint8_t reg, uint8_t* data, uint8_t len);
 #define BMI088_ACCEL_CMD_NUM 6
 #define BMI088_GYRO_CMD_NUM 6
 
-float BMI088_ACCEL_SEN = BMI088_ACCEL_3G_SEN;
-float BMI088_GYRO_SEN = BMI088_GYRO_2000_SEN;
+static float BMI088_ACCEL_SEN = BMI088_ACCEL_3G_SEN;
+static float BMI088_GYRO_SEN = BMI088_GYRO_2000_SEN;
 
-const uint8_t bmi088_aclel_init_cmd[BMI088_ACCEL_CMD_NUM][2] = {
+static const uint8_t bmi088_aclel_init_cmd[BMI088_ACCEL_CMD_NUM][2] = {
     {BMI088_ACC_PWR_CTRL, BMI088_ACC_ENABLE_ACC_ON},
     {BMI088_ACC_PWR_CONF, BMI088_ACC_PWR_ACTIVE_MODE},
     {BMI088_ACC_CONF,
@@ -33,7 +33,7 @@ const uint8_t bmi088_aclel_init_cmd[BMI088_ACCEL_CMD_NUM][2] = {
     {BMI088_INT_MAP_DATA, BMI088_ACC_INT1_DRDY_INTERRUPT},
 };
 
-const uint8_t bmi088_gyro_init_cmd[BMI088_GYRO_CMD_NUM][2] = {
+static const uint8_t bmi088_gyro_init_cmd[BMI088_GYRO_CMD_NUM][2] = {
     {BMI088_GYRO_RANGE, BMI088_GYRO_2000},
     {BMI088_GYRO_BANDWIDTH,
      BMI088_GYRO_1000_116_HZ | BMI088_GYRO_BANDWIDTH_MUST_Set},

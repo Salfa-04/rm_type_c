@@ -12,6 +12,8 @@
 #include "remtctrl.h"
 #include "type_def.h"
 
+volatile uint32_t is_ok = 0;
+
 int main(void) {
   system_init();
 

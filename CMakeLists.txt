@@ -12,8 +12,8 @@ set(CMAKE_PROJECT_DESCRIPTION       "None")
 set(CMAKE_PROJECT_VERSION           "0.07.23")
 set(CMAKE_PROJECT_URL               "api.salfa.cc")
 
-set(PRINTF_FLOAT_SUPPORT            ON)    # BOOL Y/N ON/OFF
-# set(PRINTF_FLOAT_SUPPORT            OFF)    # BOOL Y/N ON/OFF
+# set(PRINTF_FLOAT_SUPPORT            ON)    # BOOL Y/N ON/OFF
+set(PRINTF_FLOAT_SUPPORT            OFF)    # BOOL Y/N ON/OFF
 set(CMAKE_BUILD_TYPE                Debug)  # Release or Debug
 # set(CMAKE_BUILD_TYPE                Release)  # Release or Debug
 
@@ -56,11 +56,13 @@ set(CMAKE_LINKER                    ${TOOLCHAIN_PREFIX}g++)
 set(CMAKE_OBJCOPY                   ${TOOLCHAIN_PREFIX}objcopy)
 set(CMAKE_SIZE                      ${TOOLCHAIN_PREFIX}size)
 
+set(OPENOCD                         openocd)
+set(OPENOCD_CFG                     -f../openocd.cfg)
+
 set(PROBE_RS                        probe-rs)
 set(PROBE_FLAGS                     STM32F407IGHx)  # --connect-under-reset)
 set(PROBE_DL                        download --chip ${PROBE_FLAGS})
 set(PROBE_DBG                       debug --chip ${PROBE_FLAGS})
-set(PROBE_GDB                       gdb --chip ${PROBE_FLAGS})
 set(PROBE_RST                       reset --chip ${PROBE_FLAGS})
 
 
@@ -89,12 +91,12 @@ message("Project Name: "            ${CMAKE_PROJECT_NAME})
 message("Float Printf Support: "    ${PRINTF_FLOAT_SUPPORT})
 
 # Set the build type
-set(CMAKE_C_FLAGS_DEBUG             "-O0 -g3")
-set(CMAKE_ASM_FLAGS_DEBUG           "-O0 -g3")
-set(CMAKE_CXX_FLAGS_DEBUG           "-O0 -g3")
-set(CMAKE_C_FLAGS_RELEASE           "-O0 -s")
-set(CMAKE_ASM_FLAGS_RELEASE         "-O0 -s")
-set(CMAKE_CXX_FLAGS_RELEASE         "-O0 -s")
+set(CMAKE_C_FLAGS_DEBUG             "-O0 -g")
+set(CMAKE_ASM_FLAGS_DEBUG           "-O0 -g")
+set(CMAKE_CXX_FLAGS_DEBUG           "-O0 -g")
+set(CMAKE_C_FLAGS_RELEASE           "-O3 -s")
+set(CMAKE_ASM_FLAGS_RELEASE         "-O3 -s")
+set(CMAKE_CXX_FLAGS_RELEASE         "-O3 -s")
 
 # Set the project information
 unset(CMAKE_EXECUTABLE_SUFFIX)
@@ -105,14 +107,14 @@ set(CMAKE_GENERATOR Ninja CACHE INTERNAL "Name of generator.")
 # Set the target flags
 set(TARGET_FLAGS            "-mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard")
 set(CMAKE_C_FLAGS           "${TARGET_FLAGS} -Wall -Wextra -Wpedantic")
-set(CMAKE_C_FLAGS           "${CMAKE_C_FLAGS} -fdata-sections -ffunction-sections -flto")
+set(CMAKE_C_FLAGS           "${CMAKE_C_FLAGS} -fdata-sections -ffunction-sections")
 set(CMAKE_ASM_FLAGS         "${CMAKE_C_FLAGS} -x assembler-with-cpp -MMD -MP")
 set(CMAKE_CXX_FLAGS         "${CMAKE_C_FLAGS} -fno-rtti -fno-exceptions -fno-threadsafe-statics")
 set(CMAKE_C_LINK_FLAGS      "${CMAKE_C_LINK_FLAGS} ${TARGET_FLAGS} --specs=nano.specs")
 set(CMAKE_C_LINK_FLAGS      "${CMAKE_C_LINK_FLAGS} -T \"${CMAKE_SOURCE_DIR}/${LOAD_SCRIPT}\"")
 set(CMAKE_C_LINK_FLAGS      "${CMAKE_C_LINK_FLAGS} -Wl,-Map=${CMAKE_PROJECT_NAME}.map -Wl,--gc-sections")
 set(CMAKE_C_LINK_FLAGS      "${CMAKE_C_LINK_FLAGS} -Wl,--start-group -lc -lm -Wl,--end-group")
-set(CMAKE_C_LINK_FLAGS      "${CMAKE_C_LINK_FLAGS} -Wl,--print-memory-usage")
+set(CMAKE_C_LINK_FLAGS      "${CMAKE_C_LINK_FLAGS} -Wl,--print-memory-usage -Wl,--undefined=uxTopUsedPriority")
 set(CMAKE_CXX_LINK_FLAGS    "${CMAKE_C_LINK_FLAGS} -Wl,--start-group -lstdc++ -lsupc++ -Wl,--end-group")
 
 
@@ -120,6 +122,22 @@ set(CMAKE_CXX_LINK_FLAGS    "${CMAKE_C_LINK_FLAGS} -Wl,--start-group -lstdc++ -l
 ######################################
 ## User Customizations
 ######################################
+
+# Add flash target
+set(OPENOCD_DL -c\"program ${CMAKE_PROJECT_NAME} preverify verify exit\")
+add_custom_target(flash USES_TERMINAL
+    COMMENT "Download binary using ${OPENOCD}"
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMAND ${OPENOCD} ${OPENOCD_CFG} ${OPENOCD_DL}
+    DEPENDS ${CMAKE_PROJECT_NAME}
+)
+
+# Add reset target
+add_custom_target(reset USES_TERMINAL
+    COMMENT "Reset the target attached to ${OPENOCD}"
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMAND ${OPENOCD} ${OPENOCD_CFG} -c \"reset run\"
+)
 
 # Add download target
 add_custom_target(download USES_TERMINAL
@@ -129,28 +147,12 @@ add_custom_target(download USES_TERMINAL
     DEPENDS ${CMAKE_PROJECT_NAME}
 )
 
-# Add debug(gdb) target
-add_custom_target(gdb USES_TERMINAL
-    COMMENT "Firing up GDB stub using ${PROBE_RS}"
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-    COMMAND ${PROBE_RS} ${PROBE_GDB}
-    DEPENDS download
-)
-
-# Add debug(cmd) target
+# Add debug target
 add_custom_target(debug USES_TERMINAL
     COMMENT "Start online debugging using ${PROBE_RS}"
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     COMMAND ${PROBE_RS} ${PROBE_DBG}
 )
-
-# Add reset(cmd) target
-add_custom_target(reset USES_TERMINAL
-    COMMENT "Resets the target attached to ${PROBE_RS}"
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-    COMMAND ${PROBE_RS} ${PROBE_RST}
-)
-
 
 
 

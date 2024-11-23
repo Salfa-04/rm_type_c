@@ -27,7 +27,7 @@ void loop_task(void const *args) {
 
   /* Infinite loop */
   for (;;) {
-    len = usb_bufget(&buf);
+    buf = usb_bufget(&len);
     if (len == 4) {
       pid_left->kp = pid_right->kp = (fp32)buf[0] / 10;
       pid_left->ki = pid_right->ki = (fp32)buf[1] / 10;
@@ -44,9 +44,10 @@ void loop_task(void const *args) {
     }
 
     uprintf(
-        "left: %d;;;left_v: %d, right_v:%d;;; P: %f, I: %f, D: %f, S: %f\r\n",
+        "left: %d;;;left_v: %d, right_v:%d;;; P: %f, I: %f, D: %f, S: %f\r\n ",
         remote->rc.ch[0], frig_left->speed_rpm, frig_right->speed_rpm,
         pid_left->kp, pid_left->ki, pid_left->kd, pid_left->ks);
+    // uprintf("loop\r\n");
 
     vTaskDelay(30);
   }

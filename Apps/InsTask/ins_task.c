@@ -23,28 +23,28 @@ static void imu_cali_slove(fp32 gyro[3], fp32 accel[3], bmi088_t *bmi088);
 #define BMI088_BOARD_INSTALL_SPIN_MATRIX \
   {0.0f, 1.0f, 0.0f}, {-1.0f, 0.0f, 0.0f}, { 0.0f, 0.0f, 1.0f }
 
-uint8_t gyro_dma_rx_buf[SPI_DMA_GYRO_LENGHT] = {0};
-uint8_t gyro_dma_tx_buf[SPI_DMA_GYRO_LENGHT] = {
+static uint8_t gyro_dma_rx_buf[SPI_DMA_GYRO_LENGHT] = {0};
+static uint8_t gyro_dma_tx_buf[SPI_DMA_GYRO_LENGHT] = {
     0x82, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 };
 
-uint8_t accel_dma_rx_buf[SPI_DMA_ACCEL_LENGHT] = {0};
-uint8_t accel_dma_tx_buf[SPI_DMA_ACCEL_LENGHT] = {
+static uint8_t accel_dma_rx_buf[SPI_DMA_ACCEL_LENGHT] = {0};
+static uint8_t accel_dma_tx_buf[SPI_DMA_ACCEL_LENGHT] = {
     0x92, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 };
 
-uint8_t accel_temp_dma_rx_buf[SPI_DMA_ACCEL_TEMP_LENGHT] = {0};
-uint8_t accel_temp_dma_tx_buf[SPI_DMA_ACCEL_TEMP_LENGHT] = {
+static uint8_t accel_temp_dma_rx_buf[SPI_DMA_ACCEL_TEMP_LENGHT] = {0};
+static uint8_t accel_temp_dma_tx_buf[SPI_DMA_ACCEL_TEMP_LENGHT] = {
     0xA2,
     0xFF,
     0xFF,
     0xFF,
 };
 
-volatile uint8_t gyro_update_flag = 0;
-volatile uint8_t accel_update_flag = 0;
-volatile uint8_t accel_temp_update_flag = 0;
-volatile uint8_t imu_start_dma_flag = 0;
+static uint8_t gyro_update_flag = 0;
+static uint8_t accel_update_flag = 0;
+static uint8_t accel_temp_update_flag = 0;
+static uint8_t imu_start_dma_flag = 0;
 
 static fp32 gyro_scale_factor[3][3] = {BMI088_BOARD_INSTALL_SPIN_MATRIX};
 static fp32 gyro_offset[3] = {0};

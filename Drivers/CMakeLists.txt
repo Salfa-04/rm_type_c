@@ -35,14 +35,14 @@ target_sources(stm32cubemx INTERFACE ${HAL_SOURCE})
 ### Link DSP Library (Arm-Math)
 ##########################################
 add_library(arm_math INTERFACE)
-file(GLOB_RECURSE COMPONENTS_MATH DSP/Source/*.c)
+file(GLOB_RECURSE MATH_SOURCE DSP/Source/*.c)
 
 target_include_directories(arm_math INTERFACE
     DSP/Include DSP/Include/dsp DSP/PrivateInclude
 )
 
 target_sources(arm_math INTERFACE
-    ${COMPONENTS_MATH}
+    ${MATH_SOURCE}
 )
 
 target_compile_definitions(arm_math INTERFACE
@@ -55,7 +55,7 @@ target_compile_definitions(arm_math INTERFACE
 ##########################################
 
 add_library(freertos INTERFACE)
-file(GLOB_RECURSE FREERTOS_SRC FreeRTOS/*.c)
+file(GLOB_RECURSE FREERTOS_SOURCE FreeRTOS/*.c)
 
 target_include_directories(freertos INTERFACE
     FreeRTOS/portable/CMSIS
@@ -63,7 +63,7 @@ target_include_directories(freertos INTERFACE
     FreeRTOS/include
 )
 
-target_sources(freertos INTERFACE ${FREERTOS_SRC})
+target_sources(freertos INTERFACE ${FREERTOS_SOURCE})
 
 
 ##########################################
@@ -71,10 +71,10 @@ target_sources(freertos INTERFACE ${FREERTOS_SRC})
 ##########################################
 
 add_library(usbd INTERFACE)
-file(GLOB_RECURSE USBD_SRC USBD/*.c)
+file(GLOB_RECURSE USBD_SOURCE USBD/*.c)
 
 target_include_directories(usbd INTERFACE
     USBD/Core/Inc USBD/CDC/Inc
 )
 
-target_sources(usbd INTERFACE ${USBD_SRC})
+target_sources(usbd INTERFACE ${USBD_SOURCE})

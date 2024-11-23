@@ -7,7 +7,7 @@ project(${CMAKE_PROJECT_NAME})
 add_library(${CMAKE_PROJECT_NAME} INTERFACE)
 target_link_libraries(${CMAKE_PROJECT_NAME} INTERFACE
     start loop blinky ins referee
-    adc_task can_task
+    adc_task can_task gimbal chassis
 )
 
 
@@ -67,3 +67,19 @@ add_library(referee INTERFACE)
 file(GLOB APPS_REFEREE Referee/*.c)
 target_include_directories(referee INTERFACE Referee)
 target_sources(referee INTERFACE ${APPS_REFEREE})
+
+##########################################
+### Gimbal Task
+##########################################
+add_library(gimbal INTERFACE)
+file(GLOB APPS_GIMBAL Gimbal/*.c)
+target_include_directories(gimbal INTERFACE Gimbal)
+target_sources(gimbal INTERFACE ${APPS_GIMBAL})
+
+##########################################
+### Chassis Task
+##########################################
+add_library(chassis INTERFACE)
+file(GLOB APPS_CHASSIS Chassis/*.c)
+target_include_directories(chassis INTERFACE Chassis)
+target_sources(chassis INTERFACE ${APPS_CHASSIS})
