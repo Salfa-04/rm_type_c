@@ -5,7 +5,6 @@
 #include "can_task.h"
 #include "cmsis_os.h"
 #include "laser.h"
-#include "pid.h"
 #include "stdlib.h"
 #include "type_def.h"
 // #include "user_lib.h"
@@ -24,9 +23,6 @@
 #define RC_KEY_HOLD() shoot_control.shoot_rc->key.v
 
 static sctrl_t shoot_control = {0};
-static bool_t shoot_will_down = 0;  /// 摩擦轮慢慢停止
-static uint16_t addspeed = 0;
-static uint16_t fric_speed = 0;
 
 static void shoot_set_mode(void);
 static void shoot_feedback_update(void);
@@ -42,9 +38,9 @@ static const fp32 fliter_num[3] = {
 void shoot_init(void) {
   shoot_control.shoot_mode = SHOOT_STOP;
   shoot_control.shoot_rc = getp_remtctrl();
-  shoot_control.trig_motor = getp_trig_motor();
-  shoot_control.fric_motor_main = getp_fric_motor(0);
-  shoot_control.fric_motor_sub = getp_fric_motor(1);
+  shoot_control.mot_trig = getp_mot_trig();
+  shoot_control.mot_fric_m = getp_mot_fric(0);
+  shoot_control.mot_fric_s = getp_mot_fric(1);
 
   /// 初始化射击数据
   shoot_feedback_update();
@@ -63,44 +59,26 @@ void shoot_init(void) {
   shoot_control.key_time = 0;
 }
 
-int16_t shoot_control_loop(void) {
+void shoot_control_loop(void) {
   shoot_set_mode();         // 更新状态机
   shoot_feedback_update();  // 更新数据
 
   //! 摩擦轮射击关闭状态
   if (shoot_control.shoot_mode == SHOOT_STOP) {
-    shoot_laser_off();
-
-    shoot_control.trig_speed_set = 0.0f;  // 设置拨弹盘速度
-    pid_update(&shoot_control.trig_pid_speed,
-               shoot_control.trig_motor->speed_rpm,
-               shoot_control.trig_speed_set);
-    shoot_control.trig_current =  // 设置拨弹盘电流
-        (int16_t)(shoot_control.trig_pid_speed.out);
-
-    can_fric_off();  // 关闭摩擦轮
+    shoot_laser_off();  // 关闭激光
+    can_trig_off();     // 关闭拨弹盘
+    can_fric_off();     // 关闭摩擦轮
 
   }  //! 摩擦轮准备状态, 加速
   else if (shoot_control.shoot_mode == SHOOT_READY_FRIC) {
-    shoot_laser_on();
-
-    // 设置拨弹盘电机的速度
-    shoot_control.trig_speed_set = 0.0f;
-    pid_update(&shoot_control.trig_pid_speed,
-               shoot_control.trig_motor->speed_rpm,
-               shoot_control.trig_speed_set);
-
+    shoot_laser_on();    // 开启激光
+    can_trig_off();      // 关闭拨弹盘
     can_fric_forward();  // 开启摩擦轮
 
-    /// 设置摩擦轮电机和拨弹盘电机的电流
-
-    shoot_control.trig_current = (int16_t)(shoot_control.trig_pid_speed.out);
   }  //! 摩擦轮卡弹状态, 退弹, 设置摩擦轮电机反向最大速度
   else if (shoot_control.shoot_mode == SHOOT_FRIC_STOP) {
     can_fric_reverse();  // 反向转动摩擦轮
-
-    /// 设置拨弹盘电机的电流
-    shoot_control.trig_current = 0;
+    can_trig_free();     // 拨弹盘电机自由转动
 
     /// 解除卡弹状态
     if (--shoot_control.shoot_ready_fric_time <= 500) {
@@ -114,52 +92,24 @@ int16_t shoot_control_loop(void) {
 
     if (shoot_control.trig_button_hold == SWITCH_TRIGGER_OFF) {  /// 没有进弹
       // 设置拨弹轮的拨动速度, 并开启堵转反转处理
-      shoot_control.trig_speed_set = SHOOT_READY_BULLET_RPM;
+      can_trig_on();  // 开启拨弹盘
       // 0.006*19;//trigger_speed_set我按输出轴rpm算的：每秒转60°
       trig_motor_fallback();
-    } else {  /// 已经进弹
-      shoot_control.trig_speed_set = 0.0f;
+    } else {           /// 已经进弹
+      can_trig_off();  // 关闭拨弹盘
     }
-
-    /// 设置拨弹盘电机的速度
-    pid_update(&shoot_control.trig_pid_speed,
-               shoot_control.trig_motor->speed_rpm,
-               shoot_control.trig_speed_set);
-    shoot_control.trig_current = (int16_t)(shoot_control.trig_pid_speed.out);
 
   }  //! 准备就绪, 等待射击
   else if (shoot_control.shoot_mode == SHOOT_READY) {
-    shoot_laser_on();
-    // 设置拨弹轮的速度
-    shoot_control.add_angle = 0;
-    shoot_control.angle_set =
-        shoot_control.trig_angle + shoot_control.add_angle;
-
+    shoot_laser_on();    // 开启激光
     can_fric_forward();  // 开启摩擦轮
-
-    /// 计算拨弹盘电机的角度
-    pid_update(&shoot_control.trig_pid_angle, shoot_control.trig_angle,
-               shoot_control.angle_set);
-    pid_update(&shoot_control.trig_pid_speed,
-               shoot_control.trig_motor->speed_rpm,
-               shoot_control.trig_pid_angle.out);
-
-    /// 设置拨弹盘电机和摩擦轮电机的电流
-    shoot_control.trig_current = (int16_t)(shoot_control.trig_pid_speed.out);
+    can_trig_hold();     // 拨弹盘电机保持当前位置
 
   }  //! 射击状态, 发射子弹
   else if (shoot_control.shoot_mode == SHOOT_BULLET) {
-    shoot_laser_on();
-
-    /// 设置拨弹盘电机的速度为射击速度
-    shoot_control.trig_speed_set = SHOOT_BULLET_RPM;
-
+    shoot_laser_on();    // 开启激光
     can_fric_forward();  // 开启摩擦轮
-
-    /// 计算拨弹盘电机和摩擦轮电机的电流
-    pid_update(&shoot_control.trig_pid_speed,
-               shoot_control.trig_motor->speed_rpm,
-               shoot_control.trig_speed_set);
+    can_trig_on();       // 开启拨弹盘
 
     // 判断弹丸是否发射出去，若完成进入下一个状态
     /// 检测到位动开关松开, 则判断为已经完成发射
@@ -167,22 +117,12 @@ int16_t shoot_control_loop(void) {
       shoot_control.shoot_mode = SHOOT_DONE;
     }
 
-    /// 设置拨弹盘电机和摩擦轮电机的电流
-    shoot_control.trig_current = (int16_t)(shoot_control.trig_pid_speed.out);
-
-    trig_motor_fallback();
+    trig_motor_fallback();  // 判断电机是否被卡弹
   }  //! 射击完成后 子弹弹出去后，判断时间，以防误触发
   else if (shoot_control.shoot_mode == SHOOT_DONE) {
-    shoot_laser_on();
-
+    shoot_laser_on();    // 开启激光
     can_fric_forward();  // 开启摩擦轮
-
-    // 设置拨弹盘电机的速度为 0
-    shoot_control.trig_speed_set = 0.0f;
-    pid_update(&shoot_control.trig_pid_speed,
-               shoot_control.trig_motor->speed_rpm,
-               shoot_control.trig_speed_set);
-    shoot_control.trig_current = (int16_t)(shoot_control.trig_pid_speed.out);
+    can_trig_off();      // 关闭拨弹盘
 
   }  //! 弹盘电机被卡弹
   else if (shoot_control.shoot_mode == SHOOT_BULLET_STOP) {
@@ -190,20 +130,9 @@ int16_t shoot_control_loop(void) {
 
     // 拨弹盘电机卡弹数值 BAKE_TIME_OVER
     if (shoot_control.return_back_flag >= BAKE_TIME_OVER) {
-      /// 电机反向转 1.2rad
-      shoot_control.add_angle = +1.20f;
-      shoot_control.angle_set =
-          shoot_control.trig_angle + shoot_control.add_angle;
+      can_trig_back();  // 拨弹盘电机反向转动角度
       shoot_control.return_back_flag = 0;
     }
-
-    /// 计算并返回拨弹盘电机的电流
-    pid_update(&shoot_control.trig_pid_angle, shoot_control.trig_angle,
-               shoot_control.angle_set);
-    pid_update(&shoot_control.trig_pid_speed,
-               shoot_control.trig_motor->speed_rpm,
-               shoot_control.trig_pid_angle.out);
-    shoot_control.trig_current = (int16_t)(shoot_control.trig_pid_speed.out);
 
     /// 退弹完成, 返回准备状态
     if (fabsf(shoot_control.trig_speed) < 0.001)
@@ -214,9 +143,6 @@ int16_t shoot_control_loop(void) {
       shoot_control.return_back_flag = 0;
     }
   }
-
-  // 返回拨弹盘电机电流值
-  return shoot_control.trig_current;
 }
 
 /// 射击状态机设置
@@ -241,8 +167,8 @@ static void shoot_set_mode(void) {
       shoot_control.shoot_mode = SHOOT_STOP;
   }  // 拨杆没有上拨, 转速很低
   else if (shoot_control.shoot_mode == SHOOT_READY_FRIC &&
-           abs(shoot_control.fric_motor_main->speed_rpm) < 500 &&
-           abs(shoot_control.fric_motor_main->speed_rpm) < 500) {
+           abs(shoot_control.mot_fric_m->speed_rpm) < 500 &&
+           abs(shoot_control.mot_fric_m->speed_rpm) < 500) {
     // 摩擦轮加速时间超过 1000tick, 说明摩擦轮被卡弹
     if (++shoot_control.shoot_ready_fric_time > 1000)
       shoot_control.shoot_mode = SHOOT_FRIC_STOP;
@@ -261,8 +187,8 @@ static void shoot_set_mode(void) {
   ///! NOTE: 射击状态更新
   // 若摩擦轮准备就绪, 则进入准备弹药 SHOOT_READY_BULLET 状态
   if (shoot_control.shoot_mode == SHOOT_READY_FRIC &&
-      abs(shoot_control.fric_motor_main->speed_rpm) > abs(FRIC_SPEED + 50) &&
-      shoot_control.fric_motor_sub->speed_rpm > -FRIC_SPEED - 50) {
+      abs(shoot_control.mot_fric_m->speed_rpm) > abs(FRIC_SPEED + 50) &&
+      shoot_control.mot_fric_s->speed_rpm > -FRIC_SPEED - 50) {
     shoot_control.shoot_mode = SHOOT_READY_BULLET;
   }  // 判断是否装弹完毕
   else if (shoot_control.shoot_mode == SHOOT_READY_BULLET) {
@@ -328,14 +254,14 @@ static void shoot_feedback_update(void) {
   speed_fliter_2 = speed_fliter_3;
   speed_fliter_3 =  /// 二阶低通滤波
       speed_fliter_2 * fliter_num[0] + speed_fliter_1 * fliter_num[1] +
-      (shoot_control.trig_motor->speed_rpm * fliter_num[2]);
+      (shoot_control.mot_trig->speed_rpm * fliter_num[2]);
   shoot_control.trig_speed = speed_fliter_3;
 
   // 电机圈数重置, 因为输出轴旋转一圈, 电机轴旋转19圈,
   // 将电机轴数据处理成输出轴数据, 用于控制输出轴角度
   // shoot_control.ecd_count 就是输出轴的数据
   int16_t deata_ecd =
-      shoot_control.trig_motor->ecd - shoot_control.trig_motor->last_ecd;
+      shoot_control.mot_trig->ecd - shoot_control.mot_trig->last_ecd;
 
   if (deata_ecd > HALF_ECD_RANGE) {
     shoot_control.trig_laps_sum--;
@@ -345,9 +271,9 @@ static void shoot_feedback_update(void) {
 
   // 算出从起始位置到现在电机输出轴转过的角度计算输出轴角度
   // shoot_control.angle = shoot_control.ecd_Sum * MOTOR_ECD_TO_ANGLE_3508;
-  shoot_control.trig_angle = (shoot_control.trig_laps_sum * ECD_RANGE +
-                              shoot_control.trig_motor->ecd) *
-                             MOTOR_ECD_TO_ANGLE_3508;
+  shoot_control.trig_angle =
+      (shoot_control.trig_laps_sum * ECD_RANGE + shoot_control.mot_trig->ecd) *
+      MOTOR_ECD_TO_ANGLE_3508;
 
   // 控制器状态更新
   shoot_control.trig_button_hold = TRIG_BUTTEN_HOLD();  // 微动开关

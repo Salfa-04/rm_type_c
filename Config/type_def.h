@@ -8,6 +8,9 @@ typedef _Bool bool_t;
 typedef float fp32;
 typedef double fp64;
 
+#define true 1
+#define false 0
+
 #ifdef __cplusplus
 extern "C" {
 #endif

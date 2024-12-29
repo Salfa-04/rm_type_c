@@ -17,53 +17,51 @@ typedef struct {
 } motor_measure_t;
 
 void can_init(void);
+const void *getp_can1(void);
+const void *getp_can2(void);
 
-void can_gimbal_cmd(int16_t yaw, int16_t pitch, int16_t shoot);
-void can_fric_cmd(int16_t fric_main, int16_t fric_sub);
-void can_chassis_cmd(int16_t mot1, int16_t mot2, int16_t mot3, int16_t mot4);
+void can_low_cmd(int16_t mot1, int16_t mot2, int16_t mot3, int16_t mot4);
+void can_mid_cmd(int16_t yaw, int16_t trig);
+void can_high_cmd(int16_t pitch, int16_t fric_main, int16_t fric_sub);
 void can_capci_cmd(bool_t start, bool_t restart);
 
-const motor_measure_t *getp_yaw_motor(void);
-const motor_measure_t *getp_pitch_motor(void);
-const motor_measure_t *getp_trig_motor(void);
-const motor_measure_t *getp_fric_motor(uint8_t i);
-const motor_measure_t *getp_chassis_motor(uint8_t i);
+const void *getp_mot_chas(uint8_t id);
+const void *getp_mot_yaw(void);
+const void *getp_mot_trig(void);
+const void *getp_mot_pitch(void);
+const void *getp_mot_fric(uint8_t id);
 
 typedef enum {
   CAN_ADDR_BASE = 0x201,
-
-  /// 电机接收的报文ID
-  /// 0x200: ID: [1, 2, 3, 4]
-  /// 0x1FF: ID: [5, 6, 7, 8]
-  CAN_CHASSIS_BASE = 0x200,
-  CAN_SHOOT_BASE = 0x200,
-  CAN_FRIC_BASE = 0x200,
-  CAN_GIMBAL_BASE = 0x1FF,
-  CAN_CAPCI_BASE = 0x210,
+  CAN_ADDR_HIGH = 0x1FF,
+  CAN_ADDR_LOW = 0x200,
+  CAN_ADDR_CAP = 0x000,
 
   /*** CAN: 1 */
 
-  /// 底盘电机 3508
-  CAN_3508_M1_ID = 0x201,  // 0x200 1
-  CAN_3508_M2_ID = 0x202,  // 0x200 2
-  CAN_3508_M3_ID = 0x203,  // 0x200 3
-  CAN_3508_M4_ID = 0x204,  // 0x200 4
+  /// 底盘电机 3508    // TxID ID RxID  n
+  CAN_ID_M1 = 0x201,  // 0x200 1 0x201 0
+  CAN_ID_M2 = 0x202,  // 0x200 2 0x202 1
+  CAN_ID_M3 = 0x203,  // 0x200 3 0x203 2
+  CAN_ID_M4 = 0x204,  // 0x200 4 0x204 3
 
-  /// 超级电容
-  CAN_CAPCI_ID = 0x211,  // 0x210 1
+  /// 云台旋转电机 6020 // TxID ID RxID  n
+  CAN_ID_YAW = 0x205,  // 0x1FF 5 0x205 4
+
+  /// 拨弹盘电机 3508    // TxID ID RxID  n
+  CAN_ID_TRIG = 0x206,  // 0x1FF 1 0x205 5
+
+  /// 超级电容          // TxID ID RxID  n
+  CAN_ID_CAP = 0x000,  // xxxx xx xxxx  x
 
   /*** CAN: 2 */
 
-  /// 发射电机 3508
-  CAN_FRIC_MAIN_ID = 0x201,  // 0x200 1
-  CAN_FRIC_SUB_ID = 0x202,   // 0x200 2
+  /// 云台抬头电机 6020 // TxID ID RxID  n
+  CAN_ID_PIT = 0x205,  // 0x1FF 6 0x206 6
 
-  /// 云台电机 6020
-  CAN_YAW_MOTOR_ID = 0x205,  // 0x1FF 5
-  CAN_PIT_MOTOR_ID = 0x206,  // 0x1FF 6
-
-  /// 拨弹电机 3508
-  CAN_TRIG_MOTOR_ID = 0x207,  // 0x1FF 7
+  /// 发射电机 3508        // TxID ID RxID  n
+  CAN_ID_FRIC_M = 0x206,  // 0x1FF 6 0x206 7
+  CAN_ID_FRIC_S = 0x207,  // 0x1FF 7 0x207 8
 
 } can_msg_id_e;
 

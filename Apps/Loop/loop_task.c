@@ -15,8 +15,8 @@ void loop_task(void const *args) {
   (void)args;
 
   const remtctrl_t *remote = getp_remtctrl();
-  const motor_measure_t *frig_left = getp_fric_motor(0);
-  const motor_measure_t *frig_right = getp_fric_motor(1);
+  const motor_measure_t *frig_left = getp_mot_fric(0);
+  const motor_measure_t *frig_right = getp_mot_fric(1);
 
   uint32_t len = 0;
   uint8_t *buf = NULL;

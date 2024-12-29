@@ -129,12 +129,11 @@ typedef struct {
   const remtctrl_t *shoot_rc;
 
   ///! 电机数据
-  const motor_measure_t *trig_motor;       // 拨弹盘电机
-  const motor_measure_t *fric_motor_main;  // 摩擦轮电机
-  const motor_measure_t *fric_motor_sub;   // 摩擦轮电机
+  const motor_measure_t *mot_trig;    // 拨弹盘电机
+  const motor_measure_t *mot_fric_m;  // 摩擦轮电机
+  const motor_measure_t *mot_fric_s;  // 摩擦轮电机
 
   ///! 拨弹盘电机
-  fp32 trig_speed_set;
   fp32 trig_speed, trig_angle;
   int16_t trig_current;   // 拨弹盘电机电流
   int16_t trig_laps_sum;  // 拨弹盘电机圈数
@@ -168,7 +167,7 @@ typedef struct {
 
 // 由于射击和云台使用同一个can的id故也射击任务在云台任务中执行
 void shoot_init(void);
-int16_t shoot_control_loop(void);
+void shoot_control_loop(void);
 
 #ifdef __cplusplus
 }

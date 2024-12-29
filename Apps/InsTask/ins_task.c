@@ -84,6 +84,18 @@ const fp32 *getp_angle_data(void) { return INS_angle; }
 const fp32 *getp_gyro_data(void) { return INS_gyro; }
 const fp32 *getp_accel_data(void) { return INS_accel; }
 
+const fp32 temperature_pids[4] = {
+    TEMPERATURE_PID_KP,
+    TEMPERATURE_PID_KI,
+    TEMPERATURE_PID_KD,
+    0,
+};
+
+const fp32 temperature_pid_io[4] = {
+    TEMPERATURE_PID_MAX_IOUT,
+    TEMPERATURE_PID_MAX_OUT,
+};
+
 void ins_task(void const *args) {
   (void)args;
 
@@ -98,9 +110,7 @@ void ins_task(void const *args) {
   imu_cali_slove(INS_gyro, INS_accel, &bmi088_data);
 
   /// 初始化 IMU 温度控制 PID, 有关于陀螺仪零飘
-  pid_init(&imu_temp_pid, TEMPERATURE_PID_KP, TEMPERATURE_PID_KI,
-           TEMPERATURE_PID_KD, 0, TEMPERATURE_PID_MAX_OUT,
-           TEMPERATURE_PID_MAX_IOUT);
+  pid_init(&imu_temp_pid, temperature_pids, temperature_pid_io);
 
   AHRS_init(INS_quat, INS_accel, INS_mag);
 

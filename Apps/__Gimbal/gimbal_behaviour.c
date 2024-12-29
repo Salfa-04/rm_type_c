@@ -3,10 +3,6 @@
 #include "arm_math.h"
 #include "user_lib.h"
 
-// 当云台在校准, 设置蜂鸣器频率和强度
-#define gimbal_warn_buzzer_on() buzzer_on(31, 20000)
-#define gimbal_warn_buzzer_off() buzzer_off()
-
 #define int_abs(x) abs(x)
 
 /**

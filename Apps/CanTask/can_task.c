@@ -5,66 +5,124 @@
 #include "pid.h"
 #include "type_def.h"
 
-#define FRIC_SPEED 6000
-#define FRIC_TARGET_STEP 80
+static pid_t pid_fric_m = {0};
+static pid_t pid_fric_s = {0};
+static pid_t pid_trig_s = {0};
+static pid_t pid_trig_a = {0};
 
-static pid_t main_fric_pid = {0};
-static pid_t sub_fric_pid = {0};
-static pid_t trig_pid_speed = {0};
-static pid_t trig_pid_angle = {0};
-static bool_t fric_is_off = 1;
+/******************* PIDs 参数 ********************/
+
+const fp32 pids_trig_s[4] = {
+    TRIG_KP,
+    TRIG_KI,
+    TRIG_KD,
+    FRIC_KS,
+};
+
+const fp32 pids_trig_a[4] = {
+    TRIG_KP,
+    TRIG_KI,
+    TRIG_KD,
+    FRIC_KS,
+};
+
+const fp32 pids_fric_m[4] = {
+    FRIC_MAIN_KP,
+    FRIC_MAIN_KI,
+    FRIC_MAIN_KD,
+    0,
+};
+
+const fp32 pids_fric_s[4] = {
+    FRIC_SUB_KP,
+    FRIC_SUB_KI,
+    FRIC_SUB_KD,
+    0,
+};
+
+const fp32 pids_trig_io[2] = {TRIG_MAXI, TRIG_MAXO};
+const fp32 pids_fric_io[2] = {FRIC_MAXI, FRIC_MAXO};
+
+/******************* CAN Task Start ******************* */
+
+/// 1: 自由模式, 2: 锁定模式, 3: 退弹模式, 4: ......
+static uint8_t trig_flag = 0;
 
 void can_task(void const *args) {
   (void)args;
 
-  const motor_measure_t *main_fric_mot = getp_fric_motor(0);
-  const motor_measure_t *sub_fric_mot = getp_fric_motor(1);
+  const motor_measure_t *mot_fric_m = getp_mot_fric(0);
+  const motor_measure_t *mot_fric_s = getp_mot_fric(1);
+  const motor_measure_t *mot_trig = getp_mot_trig();
 
-  // 拨弹盘 PID 初始化
-  pid_init(&trig_pid_speed, TRIG_SPEED_KP, TRIG_SPEED_KI, TRIG_SPEED_KD, 0,
-           TRIG_ANGLE_PID_MAXI, TRIG_ANGLE_PID_MAXO);
-  pid_init(&trig_pid_angle, TRIG_ANGLE_KP, TRIG_ANGLE_KI, TRIG_ANGLE_KD, 0,
-           TRIG_SPEED_PID_MAXI, TRIG_SPEED_PID_MAXO);
+  // PIDS 初始化
+  pid_init(&pid_trig_s, pids_trig_s, pids_trig_io);
+  pid_init(&pid_fric_m, pids_fric_m, pids_fric_io);
+  pid_init(&pid_fric_s, pids_fric_s, pids_fric_io);
 
-  // 摩擦轮 PID 初始化
-  pid_init(&main_fric_pid, FRIC_MAIN_KP, FRIC_MAIN_KI, FRIC_MAIN_KD,
-           FRIC_TARGET_STEP, FRIC_PID_MAXI, FRIC_PID_MAXO);
-  pid_init(&sub_fric_pid, FRIC_SUB_KP, FRIC_SUB_KI, FRIC_SUB_KD,
-           FRIC_TARGET_STEP, FRIC_PID_MAXI, FRIC_PID_MAXO);
-
-  main_fric_pid.target = sub_fric_pid.target = 0;
-
-  fric_is_off = 1;  // 默认摩擦轮关闭
+  pid_fric_m.target = pid_fric_s.target = 0;
+  pid_trig_s.target = 0;
 
   /* Infinite loop */
   for (;;) {
-    pid_update(&main_fric_pid, main_fric_mot->speed_rpm);
-    pid_update(&sub_fric_pid, sub_fric_mot->speed_rpm);
+    TickType_t nowtick = xTaskGetTickCount();
 
-    if (fric_is_off) pid_clear(&main_fric_pid), pid_clear(&sub_fric_pid);
-    can_fric_cmd((int16_t)main_fric_pid.output, (int16_t)sub_fric_pid.output);
+    /******************* 摩擦轮 ********************/
+    pid_update(&pid_fric_m, mot_fric_m->speed_rpm);
+    pid_update(&pid_fric_s, mot_fric_s->speed_rpm);
 
-    vTaskDelay(30);
+    /******************* 拨弹盘 ********************/
+    pid_update(&pid_trig_s, mot_trig->speed_rpm);
+    if (trig_flag == 1) pid_clear(&pid_trig_s);
+
+    /***************** 云台抬头电机 ******************/
+
+    can_high_cmd(0, (int16_t)pid_fric_m.output, (int16_t)pid_fric_s.output);
+
+    vTaskDelayUntil(&nowtick, 100);
   }
 }
 
+void pid_get(pid_t **pid_left, pid_t **pid_right) {
+  *pid_left = &pid_fric_m;
+  *pid_right = &pid_fric_s;
+}
+
+/******************* 摩擦轮控制 ********************/
+
+#define FRIC_TARGET_SPEED 6000
+
 void can_fric_forward(void) {
-  fric_is_off = 0;
-  main_fric_pid.target = sub_fric_pid.target = FRIC_SPEED;
+  pid_set(&pid_fric_m, FRIC_TARGET_SPEED);
+  pid_set(&pid_fric_s, FRIC_TARGET_SPEED);
 }
 
 void can_fric_reverse(void) {
-  fric_is_off = 0;
-  main_fric_pid.target = sub_fric_pid.target = -FRIC_SPEED;
+  pid_set(&pid_fric_m, -FRIC_TARGET_SPEED);
+  pid_set(&pid_fric_s, -FRIC_TARGET_SPEED);
 }
 
 void can_fric_off(void) {
-  fric_is_off = 1;
-  main_fric_pid.target = sub_fric_pid.target = 0;
-  pid_clear(&main_fric_pid), pid_clear(&sub_fric_pid);
+  pid_set(&pid_fric_m, 0);
+  pid_set(&pid_fric_s, 0);
 }
 
-void pid_get(pid_t **pid_left, pid_t **pid_right) {
-  *pid_left = &main_fric_pid;
-  *pid_right = &sub_fric_pid;
+/******************* 拨弹盘控制 ********************/
+
+void can_trig_on(void) { trig_flag = 0; }
+
+//! TODO: 加入控制位置的模式, 注意边缘变化的编码值
+void can_trig_hold(void) { trig_flag = 2; }
+
+void can_trig_off(void) {
+  trig_flag = 0;
+  pid_set(&pid_trig_s, 0);
 }
+
+void can_trig_free(void) {
+  trig_flag = 1;
+  pid_set(&pid_trig_s, 0);
+}
+
+//! TODO: 加入退弹的模式, 电机反向转 x编码值
+void can_trig_back(void) { trig_flag = 3; }

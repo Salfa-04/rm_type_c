@@ -123,6 +123,14 @@ set(CMAKE_CXX_LINK_FLAGS    "${CMAKE_C_LINK_FLAGS} -Wl,--start-group -lstdc++ -l
 ## User Customizations
 ######################################
 
+# Add openocd target
+add_custom_target(openocd USES_TERMINAL
+    COMMENT "Firing up ${OPENOCD} stub"
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMAND ${OPENOCD} ${OPENOCD_CFG}
+    DEPENDS ${CMAKE_PROJECT_NAME}
+)
+
 # Add flash target
 set(OPENOCD_DL -c\"program ${CMAKE_PROJECT_NAME} preverify verify exit\")
 add_custom_target(flash USES_TERMINAL
@@ -132,19 +140,19 @@ add_custom_target(flash USES_TERMINAL
     DEPENDS ${CMAKE_PROJECT_NAME}
 )
 
-# Add reset target
-add_custom_target(reset USES_TERMINAL
-    COMMENT "Reset the target attached to ${OPENOCD}"
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-    COMMAND ${OPENOCD} ${OPENOCD_CFG} -c \"reset run\"
-)
-
 # Add download target
 add_custom_target(download USES_TERMINAL
     COMMENT "Download binary using ${PROBE_RS}"
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     COMMAND ${PROBE_RS} ${PROBE_DL} ${CMAKE_PROJECT_NAME}
     DEPENDS ${CMAKE_PROJECT_NAME}
+)
+
+# Add reset target
+add_custom_target(reset USES_TERMINAL
+    COMMENT "Reset the target attached to ${PROBE_RS}"
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMAND ${PROBE_RS} ${PROBE_RST}
 )
 
 # Add debug target
