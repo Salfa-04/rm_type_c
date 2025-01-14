@@ -21,7 +21,7 @@ static void imu_cali_slove(fp32 gyro[3], fp32 accel[3], bmi088_t *bmi088);
 #define GYRO_CONST_MAX_TEMP 45.0f
 
 #define BMI088_BOARD_INSTALL_SPIN_MATRIX \
-  {0.0f, 1.0f, 0.0f}, {-1.0f, 0.0f, 0.0f}, { 0.0f, 0.0f, 1.0f }
+  {0.0f, 1.0f, 0.0f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}
 
 static uint8_t gyro_dma_rx_buf[SPI_DMA_GYRO_LENGHT] = {0};
 static uint8_t gyro_dma_tx_buf[SPI_DMA_GYRO_LENGHT] = {
@@ -178,6 +178,14 @@ void ins_task(void const *args) {
       get_angle(INS_quat, INS_angle + INS_YAW_ADDRESS_OFFSET,
                 INS_angle + INS_PITCH_ADDRESS_OFFSET,
                 INS_angle + INS_ROLL_ADDRESS_OFFSET);
+
+      // uprintf("gyrp:%f,gyrr:%f,gyry:%f,accp:%f,accr:%f,accy:%f\n",
+      // INS_angle[0],
+      //         INS_angle[1], INS_angle[2], INS_gyro[0], INS_gyro[1],
+      //         INS_gyro[2]);
+
+      // uprintf("yaw=%f,pitch=%f,roll=%f\n", INS_angle[0], INS_angle[1],
+      //         INS_angle[2]);
     }
   }
 }
@@ -196,6 +204,9 @@ static void imu_cali_slove(fp32 gyro[3], fp32 accel[3], bmi088_t *bmi088) {
 static void imu_temp_control(fp32 imu_temperature) {
   static fp32 temperature = 0;
   static uint8_t temp_constant_time = 0;
+
+  uprintf("temp=%f,yaw=%f,pitch=%f,roll=%f\n", imu_temperature,
+          INS_angle[0] * 57, INS_angle[1] * 57, INS_angle[2] * 57);
 
   temperature = get_mcu_temperature() + 10.f;
   if (temperature > GYRO_CONST_MAX_TEMP)  // 限制最大温度
@@ -240,6 +251,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 }
 
 static void imu_cmd_spi_dma(void) {
+  UBaseType_t uxSavedInterruptStatus;
+  uxSavedInterruptStatus = taskENTER_CRITICAL_FROM_ISR();
+
   // 开启陀螺仪的DMA传输
   if ((gyro_update_flag & (1 << IMU_DR_SHFITS)) &&
       !(imu_spi_v.hdmatx->Instance->CR & DMA_SxCR_EN) &&
@@ -251,6 +265,7 @@ static void imu_cmd_spi_dma(void) {
     HAL_GPIO_WritePin(CS_Gyro_GPIO_Port, CS_Gyro_Pin, GPIO_PIN_RESET);
     SPI_DMA_enable((uint32_t)gyro_dma_tx_buf, (uint32_t)gyro_dma_rx_buf,
                    SPI_DMA_GYRO_LENGHT);
+    taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
     return;
   }
 
@@ -265,6 +280,7 @@ static void imu_cmd_spi_dma(void) {
     HAL_GPIO_WritePin(CS_Accel_GPIO_Port, CS_Accel_Pin, GPIO_PIN_RESET);
     SPI_DMA_enable((uint32_t)accel_dma_tx_buf, (uint32_t)accel_dma_rx_buf,
                    SPI_DMA_ACCEL_LENGHT);
+    taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
     return;
   }
 
@@ -279,8 +295,11 @@ static void imu_cmd_spi_dma(void) {
     HAL_GPIO_WritePin(CS_Accel_GPIO_Port, CS_Accel_Pin, GPIO_PIN_RESET);
     SPI_DMA_enable((uint32_t)accel_temp_dma_tx_buf,
                    (uint32_t)accel_temp_dma_rx_buf, SPI_DMA_ACCEL_TEMP_LENGHT);
+    taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
     return;
   }
+
+  taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
 }
 
 void DMA2_Stream2_IRQHandler(void) {

@@ -6,16 +6,17 @@ set(CMAKE_PROJECT_NAME              drivers)
 project(${CMAKE_PROJECT_NAME})
 add_library(${CMAKE_PROJECT_NAME} INTERFACE)
 target_link_libraries(${CMAKE_PROJECT_NAME} INTERFACE
-    stm32cubemx arm_math freertos usbd
+    stm32cubemx CMSISDSP freertos
 )
 
 
 
 ##########################################
-### STM32CubeMX CMSIS&HAL Driver
+### STM32CubeMX CMSIS&HAL&DSP Driver
 ##########################################
 
 add_library(stm32cubemx INTERFACE)
+add_subdirectory(DSP/Source)
 file(GLOB HAL_SOURCE F4HAL/Src/*.c)
 
 target_compile_definitions(stm32cubemx INTERFACE
@@ -29,26 +30,6 @@ target_include_directories(stm32cubemx INTERFACE
 )
 
 target_sources(stm32cubemx INTERFACE ${HAL_SOURCE})
-
-
-##########################################
-### Link DSP Library (Arm-Math)
-##########################################
-add_library(arm_math INTERFACE)
-file(GLOB_RECURSE MATH_SOURCE DSP/Source/*.c)
-
-target_include_directories(arm_math INTERFACE
-    DSP/Include DSP/Include/dsp DSP/PrivateInclude
-)
-
-target_sources(arm_math INTERFACE
-    ${MATH_SOURCE}
-)
-
-target_compile_definitions(arm_math INTERFACE
-    ARM_MATH_MATRIX_CHECK ARM_MATH_ROUNDING ARM_MATH_LOOPUNROLL
-)
-
 
 ##########################################
 ### FreeRTOS Driver
@@ -64,17 +45,3 @@ target_include_directories(freertos INTERFACE
 )
 
 target_sources(freertos INTERFACE ${FREERTOS_SOURCE})
-
-
-##########################################
-### USB Device Driver
-##########################################
-
-add_library(usbd INTERFACE)
-file(GLOB_RECURSE USBD_SOURCE USBD/*.c)
-
-target_include_directories(usbd INTERFACE
-    USBD/Core/Inc USBD/CDC/Inc
-)
-
-target_sources(usbd INTERFACE ${USBD_SOURCE})

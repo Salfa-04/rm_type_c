@@ -1,4 +1,4 @@
-#include "cdc.h"
+#include "stm32f4xx_hal.h"
 #include "type_def.h"
 
 void SystemClock_Config(void);
@@ -8,6 +8,9 @@ void SystemClock_Config(void);
 void system_init(void) {
   HAL_Init();
   SystemClock_Config();
+
+  // 调试串口初始化
+  bdbg_init();
 }
 
 /************************** Error Handler **************************/
@@ -27,19 +30,16 @@ void assert_failed(uint8_t *file, uint32_t line) {
 /************************** Print Redirection **************************/
 
 #define __va(x) __builtin_va_##x
-extern USBD_HandleTypeDef hUsbDeviceFS;
-extern uint8_t UserRxBufferFS[];
-extern uint32_t UserRxBufferLen;
 
 /// ret: 0: Ok, ~0: Err
-bool_t uprint(uint8_t *data, uint8_t len) {
+bool_t uprint(const uint8_t *data, uint8_t len) {
   /* Redirecting Output: Ok:0, Err:~0 */
-  return CDC_Transmit_FS(data, len);
+  return HAL_UART_Transmit_DMA((void *)getp_bdbg(), data, len);
 }
 
 /// ret: 0: Ok, ~0: Err
 bool_t uprintf(const char *format, ...) {
-  if (((USBD_CDC_HandleTypeDef *)hUsbDeviceFS.pClassData)->TxState) return 1;
+  if (((UART_HandleTypeDef *)getp_bdbg())->hdmatx->Lock) return 1;
 
   __va(list) arg;
   __va(start)(arg, format);
@@ -49,13 +49,6 @@ bool_t uprintf(const char *format, ...) {
   __va(end)(arg);
 
   return uprint(buffer, len);
-}
-
-uint8_t *usb_bufget(uint32_t *len) {
-  *len = UserRxBufferLen;
-  UserRxBufferLen = 0;
-
-  return UserRxBufferFS;
 }
 
 /************************** System Clock Config  **************************/

@@ -1,54 +1,34 @@
 #include "loop_task.h"
 
-#include <stdint.h>
-
-#include "can.h"
-#include "can_task.h"
 #include "freertos.h"
-#include "pid.h"
-#include "remtctrl.h"
+#include "ins_task.h"
+// #include "remtctrl.h"
 #include "type_def.h"
 
-void pid_get(pid_t **pid_left, pid_t **pid_right);
+#define PROP 180 * 0.31830988618379067154
+
+static bool_t rcv_ok = false;
 
 void loop_task(void const *args) {
   (void)args;
 
-  const remtctrl_t *remote = getp_remtctrl();
-  const motor_measure_t *frig_left = getp_mot_fric(0);
-  const motor_measure_t *frig_right = getp_mot_fric(1);
-
-  uint32_t len = 0;
-  uint8_t *buf = NULL;
-  pid_t *pid_left = NULL;
-  pid_t *pid_right = NULL;
-
-  pid_get(&pid_left, &pid_right);
+  // const remtctrl_t *ctrl = getp_remtctrl();
 
   /* Infinite loop */
   for (;;) {
-    buf = usb_bufget(&len);
-    if (len == 4) {
-      pid_left->kp = pid_right->kp = (fp32)buf[0] / 10;
-      pid_left->ki = pid_right->ki = (fp32)buf[1] / 10;
-      pid_left->kd = pid_right->kd = (fp32)buf[2] / 10;
-      pid_left->ks = pid_right->ks = (fp32)buf[3] * 10;
+    TickType_t nowtick = xTaskGetTickCount();
+
+    {
+      const fp32 *data = getp_angle_data();
+      // uprintf("a=%f,b=%f,c=%f,", data[0] * PROP, data[1] * PROP,
+      //         data[2] * PROP);
     }
+    vTaskDelayUntil(&nowtick, 100);
+  }
+}
 
-    if (remote->rc.ch[0] > 440) {  // > 330
-      can_fric_forward();
-    } else if (remote->rc.ch[0] < -440) {  // < -330
-      can_fric_reverse();
-    } else {
-      can_fric_off();
-    }
-
-    uprintf(
-        "left: %d;;;left_v: %d, right_v:%d;;; P: %f, I: %f, D: %f, S: %f\r\n ",
-        remote->rc.ch[0], frig_left->speed_rpm, frig_right->speed_rpm,
-        pid_left->kp, pid_left->ki, pid_left->kd, pid_left->ks);
-    // uprintf("loop\r\n");
-
-    vTaskDelay(30);
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+  if (huart->Instance == USART1) {
+    rcv_ok = true;
   }
 }

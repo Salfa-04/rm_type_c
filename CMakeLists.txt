@@ -12,8 +12,8 @@ set(CMAKE_PROJECT_DESCRIPTION       "None")
 set(CMAKE_PROJECT_VERSION           "0.07.23")
 set(CMAKE_PROJECT_URL               "api.salfa.cc")
 
-# set(PRINTF_FLOAT_SUPPORT            ON)    # BOOL Y/N ON/OFF
-set(PRINTF_FLOAT_SUPPORT            OFF)    # BOOL Y/N ON/OFF
+set(PRINTF_FLOAT_SUPPORT            ON)    # BOOL Y/N ON/OFF
+# set(PRINTF_FLOAT_SUPPORT            OFF)    # BOOL Y/N ON/OFF
 set(CMAKE_BUILD_TYPE                Debug)  # Release or Debug
 # set(CMAKE_BUILD_TYPE                Release)  # Release or Debug
 

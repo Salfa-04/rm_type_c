@@ -7,10 +7,8 @@
 #define SBUS_RX_BUF_NUM 36U  // DBUS接收缓冲区大小
 #define RC_FRAME_LENGTH 18U  // 遥控器数据帧长度
 
-/// 遥控器通道范围
-#define RC_CH_VALUE_MIN ((uint16_t)364)
-#define RC_CH_VALUE_OFFSET ((uint16_t)1024)
-#define RC_CH_VALUE_MAX ((uint16_t)1684)
+/// 遥控器通道偏移量
+#define RC_CH_OFFSET ((uint16_t)1024)
 
 /// 遥控器拨杆状态
 #define RC_SW_UP ((uint16_t)1)
@@ -101,7 +99,6 @@ typedef struct {
 
 void remtctrl_init(void);
 const remtctrl_t *getp_remtctrl(void);
-bool_t remtctrl_data_iserr(remtctrl_t remtctrl);
 
 /// 遥控器数据重定向
 void sbus_to_print(uint8_t *sbus);

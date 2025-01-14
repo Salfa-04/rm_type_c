@@ -4,7 +4,6 @@
 #include "bled.h"
 #include "buzzer.h"
 #include "can.h"
-#include "cdc.h"
 #include "freertos.h"
 #include "imu.h"
 #include "laser.h"
@@ -12,12 +11,9 @@
 #include "remtctrl.h"
 #include "type_def.h"
 
-volatile uint32_t is_ok = 0;
-
 int main(void) {
   system_init();
 
-  usb_cdc_init();   // 初始化虚拟串口
   remtctrl_init();  // 加载遥控器
   can_init();       // 初始化CAN、开启CAN中断接收
   adc_init();       // 加载温度、电池电压、硬件版本

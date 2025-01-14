@@ -1,6 +1,5 @@
 #include <stdlib.h>
 
-// #include "detect_task.h"
 #include "remtctrl.h"
 #include "type_def.h"
 
@@ -88,7 +87,7 @@ void remtctrl_start(void) {
     __HAL_DMA_DISABLE(&hdma_usart3_rx);
   }
 
-  hdma_usart3_rx.Instance->PAR = (uint32_t) & (USART3->DR);
+  hdma_usart3_rx.Instance->PAR = (uint32_t)&(USART3->DR);
   hdma_usart3_rx.Instance->M0AR = (uint32_t)(sbus_rx_buf[0]);  // buffer 1
   hdma_usart3_rx.Instance->M1AR = (uint32_t)(sbus_rx_buf[1]);  // buffer 2
   hdma_usart3_rx.Instance->NDTR = SBUS_RX_BUF_NUM;             // data length
@@ -163,11 +162,11 @@ static void sbus_to_rc(const uint8_t *sbus_buf, remtctrl_t *remt_ctrl) {
   remt_ctrl->rc.ch[4] = sbus_buf[16] | (sbus_buf[17] << 8);
 
   //! set the offset value of the remote control channel
-  remt_ctrl->rc.ch[0] -= RC_CH_VALUE_OFFSET;
-  remt_ctrl->rc.ch[1] -= RC_CH_VALUE_OFFSET;
-  remt_ctrl->rc.ch[2] -= RC_CH_VALUE_OFFSET;
-  remt_ctrl->rc.ch[3] -= RC_CH_VALUE_OFFSET;
-  remt_ctrl->rc.ch[4] -= RC_CH_VALUE_OFFSET;
+  remt_ctrl->rc.ch[0] -= RC_CH_OFFSET;
+  remt_ctrl->rc.ch[1] -= RC_CH_OFFSET;
+  remt_ctrl->rc.ch[2] -= RC_CH_OFFSET;
+  remt_ctrl->rc.ch[3] -= RC_CH_OFFSET;
+  remt_ctrl->rc.ch[4] -= RC_CH_OFFSET;
 }
 
 // 串口中断
