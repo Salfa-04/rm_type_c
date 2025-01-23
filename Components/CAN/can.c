@@ -216,7 +216,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
 
       {  // 电机编号 -> 7, 8
         id = rx_header.StdId - CAN_ADDR_HIGH;
-        GET_MOT_MEASURE(&motor_datas[id + 7], rx_data);
+        GET_MOT_MEASURE(&motor_datas[id], rx_data);
       } break;
     }
   }
