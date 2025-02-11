@@ -6,17 +6,16 @@ set(CMAKE_PROJECT_NAME              drivers)
 project(${CMAKE_PROJECT_NAME})
 add_library(${CMAKE_PROJECT_NAME} INTERFACE)
 target_link_libraries(${CMAKE_PROJECT_NAME} INTERFACE
-    stm32cubemx CMSISDSP freertos
+    stm32cubemx math freertos
 )
 
 
 
 ##########################################
-### STM32CubeMX CMSIS&HAL&DSP Driver
+### STM32CubeMX CMSIS & HAL Driver
 ##########################################
 
 add_library(stm32cubemx INTERFACE)
-add_subdirectory(DSP/Source)
 file(GLOB HAL_SOURCE F4HAL/Src/*.c)
 
 target_compile_definitions(stm32cubemx INTERFACE
@@ -30,6 +29,22 @@ target_include_directories(stm32cubemx INTERFACE
 )
 
 target_sources(stm32cubemx INTERFACE ${HAL_SOURCE})
+
+
+##########################################
+### Arm Math Driver
+##########################################
+
+add_library(math INTERFACE)
+
+target_include_directories(math INTERFACE
+    ArmMath
+)
+
+target_link_libraries(math INTERFACE
+    ${CMAKE_CURRENT_LIST_DIR}/ArmMath/libarm_cortexM4lf_math.a
+)
+
 
 ##########################################
 ### FreeRTOS Driver

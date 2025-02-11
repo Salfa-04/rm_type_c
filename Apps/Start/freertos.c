@@ -44,7 +44,7 @@ void freertos_init(void) {
   blinkyTask = osThreadCreate(osThread(BlinkyTask), NULL);
 
   /* definition and creation of InsTask */
-  osThreadDef(InsTask, ins_task, osPriorityNormal, 0, 512);
+  osThreadDef(InsTask, ins_task, osPriorityNormal, 0, 2048);
   insTask = osThreadCreate(osThread(InsTask), NULL);
 
   /* definition and creation of RefereeTask */
