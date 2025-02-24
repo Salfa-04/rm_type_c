@@ -1,6 +1,6 @@
 /*
- * FreeRTOS Kernel V9.0.0a
- * Copyright (C) 2018 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+ * FreeRTOS Kernel V10.3.1
+ * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -286,7 +286,7 @@ typedef QueueHandle_t SemaphoreHandle_t;
  * \defgroup xSemaphoreTake xSemaphoreTake
  * \ingroup Semaphores
  */
-#define xSemaphoreTake( xSemaphore, xBlockTime )		xQueueGenericReceive( ( QueueHandle_t ) ( xSemaphore ), NULL, ( xBlockTime ), pdFALSE )
+#define xSemaphoreTake( xSemaphore, xBlockTime )		xQueueSemaphoreTake( ( xSemaphore ), ( xBlockTime ) )
 
 /**
  * semphr. h
@@ -350,23 +350,23 @@ typedef QueueHandle_t SemaphoreHandle_t;
 
             // ...
             // For some reason due to the nature of the code further calls to
-			// xSemaphoreTakeRecursive() are made on the same mutex.  In real
-			// code these would not be just sequential calls as this would make
-			// no sense.  Instead the calls are likely to be buried inside
-			// a more complex call structure.
+            // xSemaphoreTakeRecursive() are made on the same mutex.  In real
+            // code these would not be just sequential calls as this would make
+            // no sense.  Instead the calls are likely to be buried inside
+            // a more complex call structure.
             xSemaphoreTakeRecursive( xMutex, ( TickType_t ) 10 );
             xSemaphoreTakeRecursive( xMutex, ( TickType_t ) 10 );
 
             // The mutex has now been 'taken' three times, so will not be
-			// available to another task until it has also been given back
-			// three times.  Again it is unlikely that real code would have
-			// these calls sequentially, but instead buried in a more complex
-			// call structure.  This is just for illustrative purposes.
+            // available to another task until it has also been given back
+            // three times.  Again it is unlikely that real code would have
+            // these calls sequentially, but instead buried in a more complex
+            // call structure.  This is just for illustrative purposes.
             xSemaphoreGiveRecursive( xMutex );
-			xSemaphoreGiveRecursive( xMutex );
-			xSemaphoreGiveRecursive( xMutex );
+            xSemaphoreGiveRecursive( xMutex );
+            xSemaphoreGiveRecursive( xMutex );
 
-			// Now the mutex can be taken by other tasks.
+            // Now the mutex can be taken by other tasks.
         }
         else
         {
@@ -1111,6 +1111,17 @@ typedef QueueHandle_t SemaphoreHandle_t;
  * being tested.
  */
 #define xSemaphoreGetMutexHolder( xSemaphore ) xQueueGetMutexHolder( ( xSemaphore ) )
+
+/**
+ * semphr.h
+ * <pre>TaskHandle_t xSemaphoreGetMutexHolderFromISR( SemaphoreHandle_t xMutex );</pre>
+ *
+ * If xMutex is indeed a mutex type semaphore, return the current mutex holder.
+ * If xMutex is not a mutex type semaphore, or the mutex is available (not held
+ * by a task), return NULL.
+ *
+ */
+#define xSemaphoreGetMutexHolderFromISR( xSemaphore ) xQueueGetMutexHolderFromISR( ( xSemaphore ) )
 
 /**
  * semphr.h

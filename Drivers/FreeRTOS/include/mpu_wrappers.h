@@ -1,6 +1,6 @@
 /*
- * FreeRTOS Kernel V9.0.0a
- * Copyright (C) 2018 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+ * FreeRTOS Kernel V10.3.1
+ * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -67,6 +67,7 @@ only for ports that are using the MPU. */
 		#define pcTaskGetName							MPU_pcTaskGetName
 		#define xTaskGetHandle							MPU_xTaskGetHandle
 		#define uxTaskGetStackHighWaterMark				MPU_uxTaskGetStackHighWaterMark
+		#define uxTaskGetStackHighWaterMark2			MPU_uxTaskGetStackHighWaterMark2
 		#define vTaskSetApplicationTaskTag				MPU_vTaskSetApplicationTaskTag
 		#define xTaskGetApplicationTaskTag				MPU_xTaskGetApplicationTaskTag
 		#define vTaskSetThreadLocalStoragePointer		MPU_vTaskSetThreadLocalStoragePointer
@@ -76,10 +77,13 @@ only for ports that are using the MPU. */
 		#define uxTaskGetSystemState					MPU_uxTaskGetSystemState
 		#define vTaskList								MPU_vTaskList
 		#define vTaskGetRunTimeStats					MPU_vTaskGetRunTimeStats
+		#define ulTaskGetIdleRunTimeCounter				MPU_ulTaskGetIdleRunTimeCounter
 		#define xTaskGenericNotify						MPU_xTaskGenericNotify
 		#define xTaskNotifyWait							MPU_xTaskNotifyWait
 		#define ulTaskNotifyTake						MPU_ulTaskNotifyTake
 		#define xTaskNotifyStateClear					MPU_xTaskNotifyStateClear
+		#define ulTaskNotifyValueClear					MPU_ulTaskNotifyValueClear
+		#define xTaskCatchUpTicks						MPU_xTaskCatchUpTicks
 
 		#define xTaskGetCurrentTaskHandle				MPU_xTaskGetCurrentTaskHandle
 		#define vTaskSetTimeOutState					MPU_vTaskSetTimeOutState
@@ -88,7 +92,9 @@ only for ports that are using the MPU. */
 
 		/* Map standard queue.h API functions to the MPU equivalents. */
 		#define xQueueGenericSend						MPU_xQueueGenericSend
-		#define xQueueGenericReceive					MPU_xQueueGenericReceive
+		#define xQueueReceive							MPU_xQueueReceive
+		#define xQueuePeek								MPU_xQueuePeek
+		#define xQueueSemaphoreTake						MPU_xQueueSemaphoreTake
 		#define uxQueueMessagesWaiting					MPU_uxQueueMessagesWaiting
 		#define uxQueueSpacesAvailable					MPU_uxQueueSpacesAvailable
 		#define vQueueDelete							MPU_vQueueDelete
@@ -122,6 +128,8 @@ only for ports that are using the MPU. */
 		#define xTimerGetTimerDaemonTaskHandle			MPU_xTimerGetTimerDaemonTaskHandle
 		#define xTimerPendFunctionCall					MPU_xTimerPendFunctionCall
 		#define pcTimerGetName							MPU_pcTimerGetName
+		#define vTimerSetReloadMode						MPU_vTimerSetReloadMode
+		#define uxTimerGetReloadMode					MPU_uxTimerGetReloadMode
 		#define xTimerGetPeriod							MPU_xTimerGetPeriod
 		#define xTimerGetExpiryTime						MPU_xTimerGetExpiryTime
 		#define xTimerGenericCommand					MPU_xTimerGenericCommand
@@ -135,14 +143,35 @@ only for ports that are using the MPU. */
 		#define xEventGroupSync							MPU_xEventGroupSync
 		#define vEventGroupDelete						MPU_vEventGroupDelete
 
-		/* Remove the privileged function macro. */
+		/* Map standard message/stream_buffer.h API functions to the MPU
+		equivalents. */
+		#define xStreamBufferSend						MPU_xStreamBufferSend
+		#define xStreamBufferReceive					MPU_xStreamBufferReceive
+		#define xStreamBufferNextMessageLengthBytes		MPU_xStreamBufferNextMessageLengthBytes
+		#define vStreamBufferDelete						MPU_vStreamBufferDelete
+		#define xStreamBufferIsFull						MPU_xStreamBufferIsFull
+		#define xStreamBufferIsEmpty					MPU_xStreamBufferIsEmpty
+		#define xStreamBufferReset						MPU_xStreamBufferReset
+		#define xStreamBufferSpacesAvailable			MPU_xStreamBufferSpacesAvailable
+		#define xStreamBufferBytesAvailable				MPU_xStreamBufferBytesAvailable
+		#define xStreamBufferSetTriggerLevel			MPU_xStreamBufferSetTriggerLevel
+		#define xStreamBufferGenericCreate				MPU_xStreamBufferGenericCreate
+		#define xStreamBufferGenericCreateStatic		MPU_xStreamBufferGenericCreateStatic
+
+
+		/* Remove the privileged function macro, but keep the PRIVILEGED_DATA
+		macro so applications can place data in privileged access sections
+		(useful when using statically allocated objects). */
 		#define PRIVILEGED_FUNCTION
+		#define PRIVILEGED_DATA __attribute__((section("privileged_data")))
+		#define FREERTOS_SYSTEM_CALL
 
 	#else /* MPU_WRAPPERS_INCLUDED_FROM_API_FILE */
 
 		/* Ensure API functions go in the privileged execution section. */
 		#define PRIVILEGED_FUNCTION __attribute__((section("privileged_functions")))
 		#define PRIVILEGED_DATA __attribute__((section("privileged_data")))
+		#define FREERTOS_SYSTEM_CALL __attribute__((section( "freertos_system_calls")))
 
 	#endif /* MPU_WRAPPERS_INCLUDED_FROM_API_FILE */
 
@@ -150,6 +179,7 @@ only for ports that are using the MPU. */
 
 	#define PRIVILEGED_FUNCTION
 	#define PRIVILEGED_DATA
+	#define FREERTOS_SYSTEM_CALL
 	#define portUSING_MPU_WRAPPERS 0
 
 #endif /* portUSING_MPU_WRAPPERS */

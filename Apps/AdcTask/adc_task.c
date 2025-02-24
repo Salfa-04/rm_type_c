@@ -2,7 +2,6 @@
 
 #include "adc.h"
 #include "cmsis_os.h"
-#include "freertos.h"
 
 #define VOLTAGE_DROP 0.00f
 

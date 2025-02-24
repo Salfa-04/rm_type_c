@@ -22,7 +22,7 @@ target_include_directories(algo INTERFACE
 )
 target_sources(algo INTERFACE ${COMPONENTS_ALGO})
 target_link_libraries(algo INTERFACE
-    ${CMAKE_CURRENT_LIST_DIR}/Algorithm/AHRS.lib
+    # ${CMAKE_CURRENT_LIST_DIR}/Algorithm/AHRS.lib
 )
 
 ##########################################

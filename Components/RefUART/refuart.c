@@ -10,52 +10,11 @@ static void refuart_uart_init(void);
 static void refuart_gpio_init(void);
 static void refuart_dma_init(void);
 
+/// USART6
 void refuart_init(void) {
   refuart_uart_init();
   refuart_gpio_init();
   refuart_dma_init();
-}
-
-void refuart_initer(uint8_t *rx1_buf, uint8_t *rx2_buf, uint16_t dma_buf_num) {
-  // enable the DMA transfer for the receiver and tramsmit request
-  SET_BIT(referee_uart_v.Instance->CR3, USART_CR3_DMAR);
-  SET_BIT(referee_uart_v.Instance->CR3, USART_CR3_DMAT);
-
-  // enalbe idle interrupt
-  __HAL_UART_ENABLE_IT(&referee_uart_v, UART_IT_IDLE);
-  __HAL_DMA_DISABLE(&hdma_usart6_rx);
-  while (hdma_usart6_rx.Instance->CR & DMA_SxCR_EN) {
-    __HAL_DMA_DISABLE(&hdma_usart6_rx);
-  }
-
-  __HAL_DMA_CLEAR_FLAG(&hdma_usart6_rx, DMA_LISR_TCIF1);
-  hdma_usart6_rx.Instance->PAR = (uint32_t) & (USART6->DR);
-  hdma_usart6_rx.Instance->M0AR = (uint32_t)(rx1_buf);  // memory buffer 1
-  hdma_usart6_rx.Instance->M1AR = (uint32_t)(rx2_buf);  // memory buffer 2
-  __HAL_DMA_SET_COUNTER(&hdma_usart6_rx, dma_buf_num);  // data length
-
-  // enable double memory buffer
-  SET_BIT(hdma_usart6_rx.Instance->CR, DMA_SxCR_DBM);
-  __HAL_DMA_ENABLE(&hdma_usart6_rx);
-  __HAL_DMA_DISABLE(&hdma_usart6_tx);
-
-  while (hdma_usart6_tx.Instance->CR & DMA_SxCR_EN) {
-    __HAL_DMA_DISABLE(&hdma_usart6_tx);
-  }
-
-  hdma_usart6_tx.Instance->PAR = (uint32_t) & (USART6->DR);
-}
-
-void refuart_starter(uint8_t *data, uint16_t len) {
-  __HAL_DMA_DISABLE(&hdma_usart6_tx);
-  while (hdma_usart6_tx.Instance->CR & DMA_SxCR_EN) {
-    __HAL_DMA_DISABLE(&hdma_usart6_tx);
-  }
-
-  __HAL_DMA_CLEAR_FLAG(&hdma_usart6_tx, DMA_HISR_TCIF6);
-  hdma_usart6_tx.Instance->M0AR = (uint32_t)(data);
-  __HAL_DMA_SET_COUNTER(&hdma_usart6_tx, len);
-  __HAL_DMA_ENABLE(&hdma_usart6_tx);
 }
 
 static void refuart_uart_init(void) {

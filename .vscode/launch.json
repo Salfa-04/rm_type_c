@@ -41,6 +41,10 @@
             "configFiles": [
                 "${workspaceRoot}/openocd.cfg"
             ],
+            "liveWatch": {
+                "enabled": true,
+                "samplesPerSecond": 4
+            }
         },
     ]
 }

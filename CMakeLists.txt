@@ -4,6 +4,9 @@ cmake_minimum_required(VERSION 3.22 FATAL_ERROR)
 ###
 ###     Modified by Salfa Chang
 ###       Date: [2024/08/10]
+###
+###  # cmake -G Ninja -B build
+###
 ##########################################
 
 # Set up the project
@@ -14,13 +17,13 @@ set(CMAKE_PROJECT_URL               "api.salfa.cc")
 
 set(PRINTF_FLOAT_SUPPORT            ON)    # BOOL Y/N ON/OFF
 # set(PRINTF_FLOAT_SUPPORT            OFF)    # BOOL Y/N ON/OFF
-set(CMAKE_BUILD_TYPE                Debug)  # Release or Debug
-# set(CMAKE_BUILD_TYPE                Release)  # Release or Debug
+# set(CMAKE_BUILD_TYPE                Debug)  # Release or Debug
+set(CMAKE_BUILD_TYPE                Release)  # Release or Debug
 
 set(CMAKE_C_STANDARD                11)     # Min: 11..
 set(CMAKE_CXX_STANDARD              11)     # Min: 11..
 
-set(LOAD_SCRIPT                     "Libraries/STM32F407IGHx_FLASH.ld")
+set(LOAD_SCRIPT                     "Libraries/stm32f407ighx_flash.ld")
 set(SETUP_SCRIPT                    "Libraries/startup_stm32f407xx.s")
 
 
@@ -105,9 +108,8 @@ set(CMAKE_TRY_COMPILE_TARGET_TYPE   STATIC_LIBRARY)
 set(CMAKE_GENERATOR Ninja CACHE INTERNAL "Name of generator.")
 
 # Set the target flags
-set(TARGET_FLAGS            "-mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard")
-set(CMAKE_C_FLAGS           "${TARGET_FLAGS} -Wall -Wextra -Wpedantic")
-set(CMAKE_C_FLAGS           "${CMAKE_C_FLAGS} -fdata-sections -ffunction-sections")
+set(TARGET_FLAGS            "-Wall -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard")
+set(CMAKE_C_FLAGS           "${TARGET_FLAGS} -Wextra -Wpedantic -fdata-sections -ffunction-sections")
 set(CMAKE_ASM_FLAGS         "${CMAKE_C_FLAGS} -x assembler-with-cpp -MMD -MP")
 set(CMAKE_CXX_FLAGS         "${CMAKE_C_FLAGS} -fno-rtti -fno-exceptions -fno-threadsafe-statics")
 set(CMAKE_C_LINK_FLAGS      "${CMAKE_C_LINK_FLAGS} ${TARGET_FLAGS} --specs=nano.specs")

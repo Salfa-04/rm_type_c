@@ -13,6 +13,23 @@
     (ptr)->temperate = (data)[6];                              \
   }
 
+#define GET_CAP_MEASURE(ptr, data)                                             \
+  {                                                                            \
+    union {                                                                    \
+      fp32 data;                                                               \
+      uint8_t raw[4];                                                          \
+    } offset;                                                                  \
+    offset.raw[0] = (data)[1];                                                 \
+    offset.raw[1] = (data)[2];                                                 \
+    offset.raw[2] = (data)[3];                                                 \
+    offset.raw[3] = (data)[4];                                                 \
+    (ptr)->output_enable = ((bool_t)((((data)[0]) & 0x80) >> 7));              \
+    (ptr)->err_code = ((uint8_t)(((data)[0]) & 0x7F));                         \
+    (ptr)->chassis_power = (fp32)offset.data;                                  \
+    (ptr)->chassis_limit = (((uint16_t)(data)[6] << 8 | (uint16_t)(data)[5])); \
+    (ptr)->cap_energy = ((fp32)((data)[7]) / 255.f);                           \
+  }
+
 /** 电机数据: motor_datas[9]
  *
  *  ################ CAN1 ################
@@ -27,11 +44,15 @@
  *  6]: 抬头电机     6020电机 0x1FF 1 0x205
  *  7]: 发射电机     3508电机 0x1FF 6 0x206
  *  8]: 发射电机     3508电机 0x1FF 7 0x207
- *  9]: 超级电容     你好xxxx 0x1FF 8 0x208
+ *
+ ** 超级电容数据: super_capcitor
+ *
+ * CAN: 1; 超级电容  Tx:0x061  Rx:0x051
  *
  */
 
 static motor_measure_t motor_datas[9] = {0};
+static cap_measure_t super_capcitor = {0};
 
 static CAN_TxHeaderTypeDef tx_message_low;
 static CAN_TxHeaderTypeDef tx_message_mid;
@@ -144,10 +165,13 @@ void can_high_cmd(int16_t pitch, int16_t fric_main, int16_t fric_sub) {
                        can_send_data_high, &send_mail_box);
 }
 
-/// 控制电容启动: 0x210 (CAN1)
+/// 控制超级电容: 0x061 (CAN1)
 /// start:    1: 启动, 0: 不起作用
 /// restart:  1: 重启, 0: 不起作用
-void can_capci_cmd(bool_t start, bool_t restart) {
+/// power_limit:  电容功率限制, 范围[12, 250]
+/// energy_buff:  电容能量缓冲, 范围[ 0, 300]
+void can_capci_cmd(bool_t enable, bool_t restart, uint16_t power_limit,
+                   uint16_t energy_buff) {
   uint32_t send_mail_box = 0;
 
   tx_message_cap.StdId = CAN_ADDR_CAP;
@@ -155,11 +179,11 @@ void can_capci_cmd(bool_t start, bool_t restart) {
   tx_message_cap.RTR = CAN_RTR_DATA;
   tx_message_cap.DLC = 0x08;
 
-  can_send_data_cap[0] = start;
-  can_send_data_cap[1] = restart;
-  can_send_data_cap[2] = 0;
-  can_send_data_cap[3] = 0;
-  can_send_data_cap[4] = 0;
+  can_send_data_cap[0] = (uint8_t)(enable | restart << 1) & 3;
+  can_send_data_cap[1] = (uint8_t)((power_limit & 0x00FF) >> 0);
+  can_send_data_cap[2] = (uint8_t)((power_limit & 0xFF00) >> 8);
+  can_send_data_cap[3] = (uint8_t)((energy_buff & 0x00FF) >> 0);
+  can_send_data_cap[4] = (uint8_t)((energy_buff & 0xFF00) >> 8);
   can_send_data_cap[5] = 0;
   can_send_data_cap[6] = 0;
   can_send_data_cap[7] = 0;
@@ -199,6 +223,12 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
         GET_MOT_MEASURE(&motor_datas[id], rx_data);
       } break;
 
+      case CAN_ID_CAP:
+
+      {  // 超级电容
+        GET_CAP_MEASURE(&super_capcitor, rx_data);
+      } break;
+
       default:
         break;
     }
@@ -218,6 +248,9 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
         id = rx_header.StdId - CAN_ADDR_HIGH;
         GET_MOT_MEASURE(&motor_datas[id], rx_data);
       } break;
+
+      default:
+        break;
     }
   }
 }

@@ -16,6 +16,14 @@ typedef struct {
   int16_t last_ecd;   // 上一次的编码器值
 } motor_measure_t;
 
+typedef struct {
+  bool_t output_enable;    // 使能
+  uint8_t err_code;        // 错误码
+  fp32 chassis_power;      // 底盘功率
+  uint16_t chassis_limit;  // 功率限制
+  fp32 cap_energy;         // 电容能量
+} cap_measure_t;
+
 void can_init(void);
 const void *getp_can1(void);
 const void *getp_can2(void);
@@ -23,7 +31,8 @@ const void *getp_can2(void);
 void can_low_cmd(int16_t mot1, int16_t mot2, int16_t mot3, int16_t mot4);
 void can_mid_cmd(int16_t yaw, int16_t trig);
 void can_high_cmd(int16_t pitch, int16_t fric_main, int16_t fric_sub);
-void can_capci_cmd(bool_t start, bool_t restart);
+void can_capci_cmd(bool_t enable, bool_t restart, uint16_t power_limit,
+                   uint16_t energy_buff);
 
 const void *getp_mot_chas(uint8_t id);
 const void *getp_mot_yaw(void);
@@ -35,7 +44,7 @@ typedef enum {
   CAN_ADDR_BASE = 0x201,
   CAN_ADDR_HIGH = 0x1FF,
   CAN_ADDR_LOW = 0x200,
-  CAN_ADDR_CAP = 0x000,
+  CAN_ADDR_CAP = 0x061,
 
   /*** CAN: 1 */
 
@@ -51,8 +60,8 @@ typedef enum {
   /// 拨弹盘电机 3508    // TxID ID RxID  n
   CAN_ID_TRIG = 0x206,  // 0x1FF 1 0x205 5
 
-  /// 超级电容          // TxID ID RxID  n
-  CAN_ID_CAP = 0x000,  // xxxx xx xxxx  x
+  /// 超级电容          // TxID   RxID
+  CAN_ID_CAP = 0x051,  // 0x061  0x051
 
   /*** CAN: 2 */
 

@@ -5,7 +5,6 @@
 #include "buzzer.h"
 #include "can.h"
 #include "freertos.h"
-#include "imu.h"
 #include "laser.h"
 #include "refuart.h"
 #include "remtctrl.h"
@@ -22,18 +21,13 @@ int main(void) {
   bled_init();      // 板载 LED 初始化
   refuart_init();   // 裁判系统串口初始化
 
-  HAL_Delay(300);  // 初始化 IMU
-  while (imu_init()) HAL_Delay(300);
-
   uprintf("Hello, world!\r\n");
   adc_update_vref();  // 更新参考电压
 
   freertos_init();
   osKernelStart();
 
-  for (;;) {
-    /* We should never get here */
-  }
+  for (;;); /* We'd never get here */
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
